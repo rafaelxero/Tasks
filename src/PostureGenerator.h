@@ -159,6 +159,7 @@ private:
 	rbd::MultiBody mb_;
 	rbd::MultiBodyConfig mbc_;
 	std::vector<int> quat_;
+	Eigen::VectorXd oldX_;
 
 	std::vector<Objective*> obj_;
 	std::vector<Constraint*> constr_;

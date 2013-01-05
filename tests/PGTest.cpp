@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(DummyContact)
 	pg::DummyContact rContactConstr(mb, 2, Vector3d(1., 1., 1.1));
 	pg::DummyContact lContactConstr(mb, 4, Vector3d(0.9, 1., 0.9));
 
-	pg.addConstraint(&unitQConstr);
+	//pg.addConstraint(&unitQConstr);
 	pg.addConstraint(&rContactConstr);
 	pg.addConstraint(&lContactConstr);
 

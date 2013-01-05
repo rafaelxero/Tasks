@@ -129,7 +129,7 @@ DummyContact::DummyContact(const rbd::MultiBody& mb, int bodyId,
   bodyJac_(mb, bodyId),
   bodyPgJac_(mb, bodyJac_),
   val_(3),
-  jac_(bodyPgJac_.params()*3)
+  jac_(bodyJac_.dof()*3)
 {
 }
 
@@ -139,8 +139,7 @@ void DummyContact::update(const rbd::MultiBody& mb,
 	int /* n */, const double*  /* x */)
 {
 	val_ = mbc.bodyPosW[body_].translation() - obj_;
-	const Eigen::MatrixXd& jac =
-		bodyPgJac_.jacobian(mb, mbc, bodyJac_.jacobian(mb, mbc));
+	const Eigen::MatrixXd& jac = bodyJac_.jacobian(mb, mbc);
 	jac_.segment(0, jac.cols()) = jac.row(3);
 	jac_.segment(jac.cols(), jac.cols()) = jac.row(4);
 	jac_.segment(jac.cols()*2, jac.cols()) = jac.row(5);
@@ -165,8 +164,8 @@ std::vector<std::pair<int, int> >
 	{
 		for(int j: bodyJac_.jointsPath())
 		{
-			int pos = mb.jointPosInParam(j);
-			for(int d = 0; d < mb.joint(j).params(); ++d)
+			int pos = mb.jointPosInDof(j);
+			for(int d = 0; d < mb.joint(j).dof(); ++d)
 			{
 				s.emplace_back(i, pos + d);
 			}

@@ -27,6 +27,7 @@
 #pragma GCC diagnostic pop
 
 // RBDyn
+#include <EulerIntegration.h>
 #include <FK.h>
 #include <FV.h>
 
@@ -124,8 +125,10 @@ private:
 PostureGenerator::PostureGenerator(const rbd::MultiBody& mb,
   const rbd::MultiBodyConfig& mbc):
   mb_(mb),
-  mbc_(mbc)
+  mbc_(mbc),
+  oldX_(mb.nrDof())
 {
+	oldX_.setZero();
 	for(std::size_t i = 0; i < mb.nrJoints(); ++i)
 	{
 		if(mb.joint(i).type() == rbd::Joint::Spherical ||
@@ -198,7 +201,7 @@ int PostureGenerator::nrConstraints() const
 bool PostureGenerator::get_nlp_info(int& n, int& m,
 	int& nnz_jac_g, int& nnz_h_lag)
 {
-	n = mb_.nrParams();
+	n = mb_.nrDof();
 
 	int size = 0;
 	int nbNNZ = 0;
@@ -256,7 +259,7 @@ bool PostureGenerator::get_starting_point(int n,
 	double* /* lambda */)
 {
 	using namespace Eigen;
-	Map<VectorXd>(x, n) = rbd::paramToVector(mb_, mbc_.q);
+	Map<VectorXd>(x, n).setZero();
 
 	return true;
 }
@@ -365,7 +368,11 @@ void PostureGenerator::finalize_solution(int status, int n,
 
 	if(status == Success)
 	{
-		rbd::vectorToParam(VectorXd(Map<const VectorXd>(x, n)), mbc_.q);
+		Map<const VectorXd> nX(x, n);
+		VectorXd dof = nX - oldX_;
+		rbd::vectorToParam(dof, mbc_.alpha);
+
+		rbd::eulerIntegration(mb_, mbc_, 1.);
 		rbd::forwardKinematics(mb_, mbc_);
 		rbd::forwardVelocity(mb_, mbc_);
 	}
@@ -374,21 +381,12 @@ void PostureGenerator::finalize_solution(int status, int n,
 void PostureGenerator::newX(int n, const double* x)
 {
 	using namespace Eigen;
+	Map<const VectorXd> nX(x, n);
+	VectorXd dof = nX - oldX_;
+	oldX_ = nX;
+	rbd::vectorToParam(dof, mbc_.alpha);
 
-	rbd::vectorToParam(VectorXd(Map<const VectorXd>(x, n)), mbc_.q);
-	// we should normalize the quaternion in mbc or the fk computation
-	// will be incorect for non unit quaternion
-
-	for(int j: quat_)
-	{
-		Eigen::Quaterniond q(mbc_.q[j][0], mbc_.q[j][1], mbc_.q[j][2], mbc_.q[j][3]);
-		q.normalize();
-		mbc_.q[j][0] = q.w();
-		mbc_.q[j][1] = q.x();
-		mbc_.q[j][2] = q.y();
-		mbc_.q[j][3] = q.z();
-	}
-
+	rbd::eulerIntegration(mb_, mbc_, 1.);
 	rbd::forwardKinematics(mb_, mbc_);
 	rbd::forwardVelocity(mb_, mbc_);
 
