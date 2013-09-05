@@ -112,7 +112,7 @@ public:
 		return manipBody_;
 	}
 
-	void manipBody(rbd::Body& body)
+	void manipBody(const rbd::Body& body)
 	{
 		manipBody_ = body;
 	}
@@ -122,7 +122,7 @@ public:
 		return robotToManipBodyContacts_;
 	}
 
-	void robotToManipBodyContacts(
+	void robotToManipBodyContacts(const
 			std::vector<UnilateralContact>& robToManiBodyCont)
 	{
 		robotToManipBodyContacts_ = robToManiBodyCont; 
@@ -133,7 +133,7 @@ public:
 		return manipBodyToRobotContacts_;
 	}
 
-	void manipBodyToRobotContacts(
+	void manipBodyToRobotContacts(const
 			std::vector<UnilateralContact>& maniBodyToRobCont)
 	{
 		manipBodyToRobotContacts_ = maniBodyToRobCont; 
