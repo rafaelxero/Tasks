@@ -1016,3 +1016,38 @@ BOOST_AUTO_TEST_CASE(QPBilatContactTest)
 	solver.removeBoundConstraint(&motionCstr);
 	solver.removeEqualityConstraint(&motionCstr);
 }
+
+BOOST_AUTO_TEST_CASE(QPManip)
+{
+	using namespace Eigen;
+	using namespace sva;
+	using namespace rbd;
+	using namespace tasks;
+	namespace cst = boost::math::constants;
+
+	MultiBody mb;
+	MultiBodyConfig mbcInit, mbcSolv;
+
+	std::tie(mb, mbcInit) = makeZXZArm(false);
+	forwardKinematics(mb, mbcInit);
+	forwardVelocity(mb, mbcInit);
+	
+	std::vector<Eigen::Vector3d> points =
+		{
+			Vector3d(0.1, 0.1, 0.),
+			 Vector3d(-0.1, 0.1, 0.),
+			Vector3d(-0.1, -0.1, 0.),
+			Vector3d(0.1, -0.1, 0.)
+		};
+
+	qp::QPSolver solver(true);
+
+	Body body = mb.body(0);
+	solver.manipBody(mb.body(0));
+	
+	std::vector<qp::UnilateralContact> robToManip =
+		{qp::UnilateralContact(0, points, Matrix3d::Identity(), 3, 0.7)};
+	std::vector<qp::UnilateralContact> manipToRob = robToManip;
+		
+	solver.nrVars(mb,{},{},robToManip,robToManip);
+}
