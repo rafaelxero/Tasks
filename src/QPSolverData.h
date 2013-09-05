@@ -18,7 +18,7 @@
 // includes
 // Tasks
 #include "QPContacts.h"
-
+#include <RBDyn/Body.h>
 
 namespace tasks
 {
@@ -107,6 +107,16 @@ public:
 		return biCont_;
 	}
 
+	const rbd::Body& manipBody() const
+	{
+		return manipBody_;
+	}
+
+	void manipBody(rbd::Body& body)
+	{
+		manipBody_ = body;
+	}
+
 private:
 	int alphaD_;
 	int lambda_;
@@ -118,6 +128,8 @@ private:
 
 	std::vector<UnilateralContact> uniCont_;
 	std::vector<BilateralContact> biCont_;
+
+	rbd::Body manipBody_;
 };
 
 
