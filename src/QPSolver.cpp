@@ -20,7 +20,6 @@
 // std
 #include <limits>
 #include <cmath>
-
 // RBDyn
 #include <RBDyn/MultiBody.h>
 #include <RBDyn/MultiBodyConfig.h>
@@ -175,7 +174,6 @@ void QPSolver::nrVars(const rbd::MultiBody& mb,
 			data_.lambdaUni_ += c.nrLambda(int(i));
 		}
 	}
-	data_.lambdaUni_ = data_.lambda_;
 
 	// counting bilateral contact
 	for(const BilateralContact& c: data_.biCont_)
@@ -194,11 +192,8 @@ void QPSolver::nrVars(const rbd::MultiBody& mb,
 			data_.lambdaManip_ += c.nrLambda(int(i));
 		}
 	}
-	//Lambda = uni + bi + manip	
+	//Lambda = uni + bi + manip
 	data_.lambda_ = data_.lambdaUni_ + data_.lambdaBi_ + data_.lambdaManip_; 
-	//Lambda uni is uni + bi
-	data_.lambdaUni_ += data_.lambdaBi_;
-
 	data_.nrVars_ = data_.alphaD_ + data_.lambda_ + data_.torque_;
 
 	if(XL_.rows() != data_.nrVars_)
