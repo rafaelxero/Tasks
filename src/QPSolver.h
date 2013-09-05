@@ -98,6 +98,8 @@ public:
 
 	int contactLambdaPosition(int bodyId) const;
 
+	void manipBody(const rbd::Body& body);
+
 protected:
 	void updateSolverSize(int nrVar, int nrEq, int nrIneq);
 	void updateQLDSize(int nrVar, int nrEq, int nrIneq);

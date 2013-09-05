@@ -518,6 +518,10 @@ void QPSolver::postUpdate(const rbd::MultiBody& mb,
 	}
 }
 
+void QPSolver::manipBody(const rbd::Body& body)
+{
+	data_.manipBody(body);
+}
 
 } // namespace qp
 
