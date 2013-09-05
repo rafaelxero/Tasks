@@ -116,6 +116,28 @@ public:
 	{
 		manipBody_ = body;
 	}
+	
+	const std::vector<UnilateralContact>& robotToManipBodyContacts() const
+	{
+		return robotToManipBodyContacts_;
+	}
+
+	void robotToManipBodyContacts(
+			std::vector<UnilateralContact>& robToManiBodyCont)
+	{
+		robotToManipBodyContacts_ = robToManiBodyCont; 
+	}
+
+	const std::vector<UnilateralContact>& manipBodyToRobotContacts() const
+	{
+		return manipBodyToRobotContacts_;
+	}
+
+	void manipBodyToRobotContacts(
+			std::vector<UnilateralContact>& maniBodyToRobCont)
+	{
+		manipBodyToRobotContacts_ = maniBodyToRobCont; 
+	}
 
 private:
 	int alphaD_;
@@ -129,7 +151,11 @@ private:
 	std::vector<UnilateralContact> uniCont_;
 	std::vector<BilateralContact> biCont_;
 
+	int lambdaManip;
 	rbd::Body manipBody_;
+	std::vector<UnilateralContact> robotToManipBodyContacts_;
+	std::vector<UnilateralContact> manipBodyToRobotContacts_;
+	
 };
 
 
