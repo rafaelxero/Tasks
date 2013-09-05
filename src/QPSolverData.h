@@ -151,7 +151,7 @@ private:
 	std::vector<UnilateralContact> uniCont_;
 	std::vector<BilateralContact> biCont_;
 
-	int lambdaManip;
+	int lambdaManip_;
 	rbd::Body manipBody_;
 	std::vector<UnilateralContact> robotToManipBodyContacts_;
 	std::vector<UnilateralContact> manipBodyToRobotContacts_;

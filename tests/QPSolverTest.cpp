@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE(QPTaskTest)
 
 	qp::QPSolver solver;
 
-	solver.nrVars(mb, {}, {});
+	solver.nrVars(mb, {}, {}, {}, {});
 	BOOST_CHECK_EQUAL(solver.nrVars(), 3 + 3);
 
 	solver.updateEqConstrSize();
@@ -357,7 +357,7 @@ BOOST_AUTO_TEST_CASE(QPConstrTest)
 	BOOST_CHECK_EQUAL(solver.nrEqualityConstraints(), 1);
 	BOOST_CHECK_EQUAL(solver.nrConstraints(), 1);
 
-	solver.nrVars(mb, contVec, {});
+	solver.nrVars(mb, contVec, {}, {}, {});
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
 
@@ -405,7 +405,7 @@ BOOST_AUTO_TEST_CASE(QPConstrTest)
 	BOOST_CHECK_EQUAL(solver.nrEqualityConstraints(), 1);
 	BOOST_CHECK_EQUAL(solver.nrConstraints(), 1);
 
-	solver.nrVars(mb, contVec, {});
+	solver.nrVars(mb, contVec, {}, {}, {});
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
 
@@ -454,7 +454,7 @@ BOOST_AUTO_TEST_CASE(QPConstrTest)
 	BOOST_CHECK_EQUAL(solver.nrBoundConstraints(), 1);
 	BOOST_CHECK_EQUAL(solver.nrConstraints(), 1);
 
-	solver.nrVars(mb, contVec, {});
+	solver.nrVars(mb, contVec, {}, {}, {});
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
 
@@ -506,7 +506,7 @@ BOOST_AUTO_TEST_CASE(QPConstrTest)
 	solver.addConstraint(&motionCstr);
 	BOOST_CHECK_EQUAL(solver.nrConstraints(), 1);
 
-	solver.nrVars(mb, contVec, {});
+	solver.nrVars(mb, contVec, {}, {}, {});
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
 
@@ -573,7 +573,7 @@ BOOST_AUTO_TEST_CASE(QPJointLimitsTest)
 	solver.addConstraint(&jointConstr);
 	BOOST_CHECK_EQUAL(solver.nrConstraints(), 1);
 
-	solver.nrVars(mb, {}, {});
+	solver.nrVars(mb, {}, {}, {}, {});
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
 
@@ -651,7 +651,7 @@ BOOST_AUTO_TEST_CASE(QPDamperJointLimitsTest)
 	BOOST_CHECK_EQUAL(solver.nrBoundConstraints(), 1);
 	BOOST_CHECK_EQUAL(solver.nrConstraints(), 1);
 
-	solver.nrVars(mb, {}, {});
+	solver.nrVars(mb, {}, {}, {}, {});
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
 
@@ -737,7 +737,7 @@ BOOST_AUTO_TEST_CASE(QPTorqueLimitsTest)
 	solver.addConstraint(&torqueConstr);
 	BOOST_CHECK_EQUAL(solver.nrConstraints(), 2);
 
-	solver.nrVars(mb, {}, {});
+	solver.nrVars(mb, {}, {}, {}, {});
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
 
@@ -830,7 +830,7 @@ BOOST_AUTO_TEST_CASE(QPAutoCollTest)
 	solver.addConstraint(&autoCollConstr);
 	BOOST_CHECK_EQUAL(solver.nrConstraints(), 1);
 
-	solver.nrVars(mb, {}, {});
+	solver.nrVars(mb, {}, {}, {}, {});
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
 
@@ -905,7 +905,7 @@ BOOST_AUTO_TEST_CASE(QPStaticEnvCollTest)
 	solver.addConstraint(&seCollConstr);
 	BOOST_CHECK_EQUAL(solver.nrConstraints(), 1);
 
-	solver.nrVars(mb, {}, {});
+	solver.nrVars(mb, {}, {}, {}, {});
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
 
@@ -983,7 +983,7 @@ BOOST_AUTO_TEST_CASE(QPBilatContactTest)
 	std::vector<qp::BilateralContact> bi =
 		{qp::BilateralContact(0, Vector3d::Zero(), 0.1, 4, Matrix3d::Identity(), 3., 0.7)};
 
-	solver.nrVars(mb, uni, {});
+	solver.nrVars(mb, uni, {}, {}, {});
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
 
@@ -994,7 +994,7 @@ BOOST_AUTO_TEST_CASE(QPBilatContactTest)
 
 	// We test it again with bilateral contact to check that the stance is now
 	// valid
-	solver.nrVars(mb, {}, bi);
+	solver.nrVars(mb, {}, bi, {}, {});
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
 

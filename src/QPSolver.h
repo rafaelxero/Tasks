@@ -67,7 +67,9 @@ public:
 
 	void nrVars(const rbd::MultiBody& mb,
 		std::vector<UnilateralContact> uni,
-		std::vector<BilateralContact> bi);
+		std::vector<BilateralContact> bi,
+		std::vector<UnilateralContact> robToManip,
+		std::vector<UnilateralContact> manipToRob);
 	int nrVars() const;
 
 	void addEqualityConstraint(Equality* co);

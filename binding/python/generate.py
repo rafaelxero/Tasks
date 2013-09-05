@@ -248,7 +248,9 @@ def build_qp(tasks):
   sol.add_method('nrVars', None,
                  [param('const rbd::MultiBody&', 'mb'),
                   param('std::vector<tasks::qp::UnilateralContact>&', 'cont'),
-                  param('std::vector<tasks::qp::BilateralContact>&', 'cont')])
+                  param('std::vector<tasks::qp::BilateralContact>&', 'cont'),
+                  param('std::vector<tasks::qp::UnilateralContact>&', 'cont'),
+                  param('std::vector<tasks::qp::UnilateralContact>&', 'cont')])
   sol.add_method('nrVars', retval('int'), [], is_const=True)
 
   add_std_solver_add_rm_nr('EqualityConstraint', eqConstrName)

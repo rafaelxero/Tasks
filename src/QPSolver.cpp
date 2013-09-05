@@ -151,20 +151,28 @@ void QPSolver::updateInEqConstrSize()
 
 void QPSolver::nrVars(const rbd::MultiBody& mb,
 	std::vector<UnilateralContact> uni,
-	std::vector<BilateralContact> bi)
+	std::vector<BilateralContact> bi,
+	std::vector<UnilateralContact> robToManip,
+	std::vector<UnilateralContact> manipToRob)
 {
 	data_.alphaD_ = mb.nrDof();
 	data_.lambda_ = 0;
+	data_.lambdaUni_ = 0;
+	data_.lambdaBi_ = 0;
+	data_.lambdaManip_ = 0;
 	data_.torque_ = (mb.nrDof() - mb.joint(0).dof());
 	data_.uniCont_ = uni;
 	data_.biCont_ = bi;
+
+	data_.robotToManipBodyContacts(robToManip);
+	data_.manipBodyToRobotContacts(manipToRob);
 
 	// counting unilateral contact
 	for(const UnilateralContact& c: data_.uniCont_)
 	{
 		for(std::size_t i = 0; i < c.points.size(); ++i)
 		{
-			data_.lambda_ += c.nrLambda(int(i));
+			data_.lambdaUni_ += c.nrLambda(int(i));
 		}
 	}
 	data_.lambdaUni_ = data_.lambda_;
@@ -174,10 +182,22 @@ void QPSolver::nrVars(const rbd::MultiBody& mb,
 	{
 		for(std::size_t i = 0; i < c.points.size(); ++i)
 		{
-			data_.lambda_ += c.nrLambda(int(i));
+			data_.lambdaBi_ += c.nrLambda(int(i));
 		}
 	}
-	data_.lambdaBi_ = data_.lambda_ - data_.lambdaUni_;
+
+	// counting robot to manipulated body contacts
+	for(const UnilateralContact& c: data_.robotToManipBodyContacts())
+	{
+		for(std::size_t i = 0; i < c.points.size(); ++i)
+		{
+			data_.lambdaManip_ += c.nrLambda(int(i));
+		}
+	}
+	//Lambda = uni + bi + manip	
+	data_.lambda_ = data_.lambdaUni_ + data_.lambdaBi_ + data_.lambdaManip_; 
+	//Lambda uni is uni + bi
+	data_.lambdaUni_ += data_.lambdaBi_;
 
 	data_.nrVars_ = data_.alphaD_ + data_.lambda_ + data_.torque_;
 
