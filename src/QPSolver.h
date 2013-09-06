@@ -101,6 +101,8 @@ public:
 	int contactLambdaPosition(int bodyId) const;
 
 	void manipBody(const rbd::MultiBody& body);
+	void manipBody(const rbd::MultiBody& body, const rbd::MultiBodyConfig& bodyConfig);
+	void manipBodyConfig(const rbd::MultiBodyConfig& body);
 
 protected:
 	void updateSolverSize(int nrVar, int nrEq, int nrIneq);
