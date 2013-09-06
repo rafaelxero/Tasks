@@ -533,7 +533,7 @@ void QPSolver::postUpdate(const rbd::MultiBody& mb,
 	}
 }
 
-void QPSolver::manipBody(const rbd::Body& body)
+void QPSolver::manipBody(const rbd::MultiBody& body)
 {
 	data_.manipBody(body);
 }

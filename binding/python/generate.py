@@ -267,7 +267,7 @@ def build_qp(tasks):
 
   sol.add_method('contactLambdaPosition', retval('int'), [param('int', 'bodyId')], is_const=True)
 
-  sol.add_method('manipBody', None, [param('const rbd::Body&','body')])
+  sol.add_method('manipBody', None, [param('const rbd::MultiBody&','body')])
   # FrictionCone
   frictionCone.add_constructor([])
   frictionCone.add_constructor([param('Eigen::Matrix3d', 'frame'), param('int', 'nrGen'),

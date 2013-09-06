@@ -100,7 +100,7 @@ public:
 
 	int contactLambdaPosition(int bodyId) const;
 
-	void manipBody(const rbd::Body& body);
+	void manipBody(const rbd::MultiBody& body);
 
 protected:
 	void updateSolverSize(int nrVar, int nrEq, int nrIneq);

@@ -1042,8 +1042,7 @@ BOOST_AUTO_TEST_CASE(QPManip)
 
 	qp::QPSolver solver(true);
 
-	Body body = mb.body(0);
-	solver.manipBody(mb.body(0));
+	solver.manipBody(mb);
 	
 	std::vector<qp::UnilateralContact> robToManip =
 		{qp::UnilateralContact(0, points, Matrix3d::Identity(), 3, 0.7)};
