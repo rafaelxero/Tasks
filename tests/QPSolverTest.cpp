@@ -1026,11 +1026,11 @@ BOOST_AUTO_TEST_CASE(QPManip)
 	namespace cst = boost::math::constants;
 
 	MultiBody mb;
-	MultiBodyConfig mbcInit, mbcSolv;
+	MultiBodyConfig mbc;
 
-	std::tie(mb, mbcInit) = makeZXZArm(false);
-	forwardKinematics(mb, mbcInit);
-	forwardVelocity(mb, mbcInit);
+	std::tie(mb, mbc) = makeZXZArm(false);
+	forwardKinematics(mb, mbc);
+	forwardVelocity(mb, mbc);
 	
 	std::vector<Eigen::Vector3d> points =
 		{
@@ -1042,7 +1042,7 @@ BOOST_AUTO_TEST_CASE(QPManip)
 
 	qp::QPSolver solver(true);
 
-	solver.manipBody(mb);
+	solver.manipBody(mb,mbc);
 	
 	std::vector<qp::UnilateralContact> robToManip =
 		{qp::UnilateralContact(0, points, Matrix3d::Identity(), 3, 0.7)};
