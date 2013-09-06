@@ -1,9 +1,9 @@
 enable_language(Fortran)
 
 set(SOURCES Tasks.cpp QPSolver.cpp QPTasks.cpp QPConstr.cpp QL.cpp QL.f
-            QPContacts.cpp QPSolverData.cpp)
+            QPContacts.cpp QPSolverData.cpp QPManipConstr.cpp)
 set(HEADERS Tasks.h QPSolver.h QPTasks.h QPConstr.h QL.h
-            QPContacts.h QPSolverData.h)
+            QPContacts.h QPSolverData.h QPManipConstr.h)
 
 if(${POSTURE_GENERATOR})
   list(APPEND SOURCES PGJacobian.cpp PostureGenerator.cpp PGConstr.cpp)
