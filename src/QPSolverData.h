@@ -150,6 +150,11 @@ public:
 		manipBodyToRobotContacts_ = maniBodyToRobCont; 
 	}
 
+	int nrContactsManip() const
+	{
+		return static_cast<int>(robotToManipBodyContacts_.size());
+	} 
+
 private:
 	int alphaD_;
 	int lambda_;

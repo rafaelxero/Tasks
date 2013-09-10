@@ -53,7 +53,8 @@ public:
 	virtual void updateNrVars(const rbd::MultiBody& mb,
 		const SolverData& data);
 
-	virtual void update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc);
+	virtual void update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc,
+				const rbd::MultiBody& mbManip, const rbd::MultiBodyConfig& mbcManip);
 
 	// Equality Constraint
 	virtual int maxEq();
@@ -88,9 +89,14 @@ private:
 
 private:
 	rbd::ForwardDynamics fd_;
-
+	rbd::ForwardDynamics fdManip_;
+	
 	std::vector<ContactData> cont_;
 	Eigen::MatrixXd fullJac_;
+	Eigen::MatrixXd fullJacRobot_;
+	
+	std::vector<ContactData> contManip_;
+	std::Vector<ContactData> contRobot_;
 
 	Eigen::MatrixXd AEq_;
 	Eigen::VectorXd BEq_;

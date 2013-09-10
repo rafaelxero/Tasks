@@ -78,6 +78,11 @@ void MotionManipConstr::updateNrVars(const rbd::MultiBody& mb,
 	const auto& biCont = data.bilateralContacts();
 	cont_.resize(data.nrContacts());
 
+	const auto& manipCont = data.robotToManipBodyContacts();
+	const auto& manipRobot = data.ManipBodyToRobotContacts();
+	contManip_.resize(data.nrContactsManip());
+	contRobot_.resize(data.nrContactsManip());
+
 	nrDof_ = data.alphaD();
 	nrFor_ = data.lambda();
 	nrTor_ = data.torque();
@@ -98,6 +103,22 @@ void MotionManipConstr::updateNrVars(const rbd::MultiBody& mb,
 		++iCont;
 	}
 
+	iCont = 0;
+	for(const UnilateralContact& c: manipCont)
+	{
+		contManip_[iCont] = ContactData(mb, c.bodyId, c.points,
+			std::vector<FrictionCone>(c.points.size(), c.cone));
+		++iCont;
+	}
+
+	iCont = 0;
+	for(const UnilateralContact& c: robotCont)
+	{
+		contRobot_[iCont] = ContactData(mb, c.bodyId, c.points,
+			std::vector<FrictionCone>(c.points.size(), c.cone));
+		++iCont;
+	}
+
 	AEq_.resize(nrDof_, nrDof_ + nrFor_ + nrTor_);
 	BEq_.resize(nrDof_);
 
@@ -112,12 +133,16 @@ void MotionManipConstr::updateNrVars(const rbd::MultiBody& mb,
 }
 
 
-void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc)
+void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc,
+				const rbd::MultiBody& mbManip, const rbd::MultiBodyConfig& mbcManip)
 {
 	using namespace Eigen;
 
 	fd_.computeH(mb, mbc);
 	fd_.computeC(mb, mbc);
+	
+	fdManip_.computeH(mbManip, mbcManip);
+	fdManip_.computeC(mbManip, mbcManip);
 
 	// H*alphaD - tau - tau_c = -C
 
@@ -125,7 +150,8 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 	//         nrDof      nrFor            nrTor
 	// nrDof [   H      -Sum J_i^t*ni     [0 ... -1]
 
-	AEq_.block(0, 0, nrDof_, nrDof_) = fd_.H();
+	AEq_.block(0, 0, nrDof_, nrDof_) << fd_.H(), MatrixXd::Zero(nrDof_-6,6),
+						MatrixXd::Zero(6,nrDof_-6), fdManip_.H();
 
 	int contPos = nrDof_;
 	for(std::size_t i = 0; i < cont_.size(); ++i)
@@ -151,11 +177,47 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 		}
 	}
 
+	for(std::size_t i = 0; i < contManip_.size(); ++i)
+	{
+		const MatrixXd& jacManip = contManip_[i].jac.jacobian(mbManip, mbcManip);
+		const MatrixXd& jacRobot = contRobot_[i].jac.jacobian(mbManip, mbcManip);
+
+		// for each contact point we compute all the torques
+		// due to each generator of the friction cone
+		for(std::size_t j = 0; j < contManip_[i].points.size(); ++j)
+		{
+			contManip_[i].generatorsComp[j] =
+				mbcManip.bodyPosW[contManip_[i].body].rotation().transpose()*contManip_[i].generators[j];
+
+			contManip_[i].jac.translateJacobian(jacManip, mbcManip,
+				contManip_[i].points[j], contManip_[i].jacTrans);
+			contManip_[i].jac.fullJacobian(mbManip, contManip_[i].jacTrans, fullJac_);
+			
+			contRobot_[i].generatorsComp[j] =
+				mbcManip.bodyPosW[contRobot_[i].body].rotation().transpose()*contRobot_[i].generators[j];
+
+			contRobot_[i].jac.translateJacobian(jacManip, mbcManip,
+				contManip_[i].points[j], contRobot_[i].jacTrans);
+			contRobot_[i].jac.fullJacobian(mbManip, contManip_[i].jacTrans, fullJacRobot_);
+
+			AEq_.block(0, contPos, nrDof_-6, contManip_[i].generatorsComp[j].cols()) =
+				-fullJac_.block(3, 0, 3, fullJac_.cols()).transpose()*
+					contManip_[i].generatorsComp[j];
+			AEq_.block(nrDof_-6, contPos, 6, contManip_[i].generatorsComp[j].cols()) =
+				-fullJacRobot_.block(3, 0, 3, fullJacRobot_.cols()).transpose()*
+					contRobot_[i].generatorsComp[j];
+
+			contPos += int(cont_[i].generatorsComp[j].cols());
+		}
+	}
+
+
+
 	AEq_.block(mb.joint(0).dof(), contPos, nrTor_, nrTor_) =
 		-MatrixXd::Identity(nrTor_, nrTor_);
 
 	// BEq = -C
-	BEq_ = -fd_.C();
+	BEq_ << -fd_.C(),-fdManip_.C();
 }
 
 

@@ -192,6 +192,12 @@ void QPSolver::nrVars(const rbd::MultiBody& mb,
 			data_.lambdaManip_ += c.nrLambda(int(i));
 		}
 	}
+	
+	if(data_.lambdaManip_!=0)
+	{
+		data_.alphaD_+=6; //Add the free flyer of the manipulated body
+	}
+
 	//Lambda = uni + bi + manip
 	data_.lambda_ = data_.lambdaUni_ + data_.lambdaBi_ + data_.lambdaManip_; 
 	data_.nrVars_ = data_.alphaD_ + data_.lambda_ + data_.torque_;
