@@ -96,7 +96,7 @@ private:
 	Eigen::MatrixXd fullJacRobot_;
 	
 	std::vector<ContactData> contManip_;
-	std::Vector<ContactData> contRobot_;
+	std::vector<ContactData> contRobot_;
 
 	Eigen::MatrixXd AEq_;
 	Eigen::VectorXd BEq_;

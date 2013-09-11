@@ -79,7 +79,7 @@ void MotionManipConstr::updateNrVars(const rbd::MultiBody& mb,
 	cont_.resize(data.nrContacts());
 
 	const auto& manipCont = data.robotToManipBodyContacts();
-	const auto& manipRobot = data.ManipBodyToRobotContacts();
+	const auto& robotCont = data.manipBodyToRobotContacts();
 	contManip_.resize(data.nrContactsManip());
 	contRobot_.resize(data.nrContactsManip());
 
@@ -180,7 +180,7 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 	for(std::size_t i = 0; i < contManip_.size(); ++i)
 	{
 		const MatrixXd& jacManip = contManip_[i].jac.jacobian(mbManip, mbcManip);
-		const MatrixXd& jacRobot = contRobot_[i].jac.jacobian(mbManip, mbcManip);
+		const MatrixXd& jacRobot = contRobot_[i].jac.jacobian(mb, mbc);
 
 		// for each contact point we compute all the torques
 		// due to each generator of the friction cone
@@ -194,18 +194,18 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 			contManip_[i].jac.fullJacobian(mbManip, contManip_[i].jacTrans, fullJac_);
 			
 			contRobot_[i].generatorsComp[j] =
-				mbcManip.bodyPosW[contRobot_[i].body].rotation().transpose()*contRobot_[i].generators[j];
+				mbc.bodyPosW[contRobot_[i].body].rotation().transpose()*contRobot_[i].generators[j];
 
-			contRobot_[i].jac.translateJacobian(jacManip, mbcManip,
-				contManip_[i].points[j], contRobot_[i].jacTrans);
-			contRobot_[i].jac.fullJacobian(mbManip, contManip_[i].jacTrans, fullJacRobot_);
+			contRobot_[i].jac.translateJacobian(jacRobot, mbc,
+				contRobot_[i].points[j], contRobot_[i].jacTrans);
+			contRobot_[i].jac.fullJacobian(mb, contRobot_[i].jacTrans, fullJacRobot_);
 
 			AEq_.block(0, contPos, nrDof_-6, contManip_[i].generatorsComp[j].cols()) =
-				-fullJac_.block(3, 0, 3, fullJac_.cols()).transpose()*
-					contManip_[i].generatorsComp[j];
-			AEq_.block(nrDof_-6, contPos, 6, contManip_[i].generatorsComp[j].cols()) =
 				-fullJacRobot_.block(3, 0, 3, fullJacRobot_.cols()).transpose()*
 					contRobot_[i].generatorsComp[j];
+			AEq_.block(nrDof_-6, contPos, 6, contManip_[i].generatorsComp[j].cols()) =
+				-fullJac_.block(3, 0, 3, fullJac_.cols()).transpose()*
+					contManip_[i].generatorsComp[j];
 
 			contPos += int(cont_[i].generatorsComp[j].cols());
 		}
