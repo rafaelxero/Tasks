@@ -74,6 +74,8 @@ MotionManipConstr::MotionManipConstr(const rbd::MultiBody& mb):
 void MotionManipConstr::updateNrVars(const rbd::MultiBody& mb,
 	const SolverData& data)
 {
+	mbManip_ = data.manipBody();
+	mbcManip_ = data.manipBodyConfig();
 	const auto& uniCont = data.unilateralContacts();
 	const auto& biCont = data.bilateralContacts();
 	cont_.resize(data.nrContacts());
@@ -133,16 +135,15 @@ void MotionManipConstr::updateNrVars(const rbd::MultiBody& mb,
 }
 
 
-void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc,
-				const rbd::MultiBody& mbManip, const rbd::MultiBodyConfig& mbcManip)
+void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc)
 {
 	using namespace Eigen;
 
 	fd_.computeH(mb, mbc);
 	fd_.computeC(mb, mbc);
 	
-	fdManip_.computeH(mbManip, mbcManip);
-	fdManip_.computeC(mbManip, mbcManip);
+	fdManip_.computeH(mbManip_, mbcManip_);
+	fdManip_.computeC(mbManip_, mbcManip_);
 
 	// H*alphaD - tau - tau_c = -C
 
@@ -179,7 +180,7 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 
 	for(std::size_t i = 0; i < contManip_.size(); ++i)
 	{
-		const MatrixXd& jacManip = contManip_[i].jac.jacobian(mbManip, mbcManip);
+		const MatrixXd& jacManip = contManip_[i].jac.jacobian(mbManip_, mbcManip_);
 		const MatrixXd& jacRobot = contRobot_[i].jac.jacobian(mb, mbc);
 
 		// for each contact point we compute all the torques
@@ -187,11 +188,11 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 		for(std::size_t j = 0; j < contManip_[i].points.size(); ++j)
 		{
 			contManip_[i].generatorsComp[j] =
-				mbcManip.bodyPosW[contManip_[i].body].rotation().transpose()*contManip_[i].generators[j];
+				mbcManip_.bodyPosW[contManip_[i].body].rotation().transpose()*contManip_[i].generators[j];
 
-			contManip_[i].jac.translateJacobian(jacManip, mbcManip,
+			contManip_[i].jac.translateJacobian(jacManip, mbcManip_,
 				contManip_[i].points[j], contManip_[i].jacTrans);
-			contManip_[i].jac.fullJacobian(mbManip, contManip_[i].jacTrans, fullJac_);
+			contManip_[i].jac.fullJacobian(mbManip_, contManip_[i].jacTrans, fullJac_);
 			
 			contRobot_[i].generatorsComp[j] =
 				mbc.bodyPosW[contRobot_[i].body].rotation().transpose()*contRobot_[i].generators[j];
@@ -274,6 +275,8 @@ ContactManipAccConstr::ContactManipAccConstr(const rbd::MultiBody& mb):
 void ContactManipAccConstr::updateNrVars(const rbd::MultiBody& mb,
 	const SolverData& data)
 {
+	mbManip_ = data.manipBody();
+	mbcManip_ = data.manipBodyConfig();
 	contManip_.clear();
 	contRobot_.clear();
 	nrDof_ = data.alphaD();
@@ -295,13 +298,12 @@ void ContactManipAccConstr::updateNrVars(const rbd::MultiBody& mb,
 }
 
 
-void ContactManipAccConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc,
-			const rbd::MultiBody& mbManip, const rbd::MultiBodyConfig& mbcManip)
+void ContactManipAccConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc)
 {
 	using namespace Eigen;
 
 	rbd::paramToVector(mbc.alpha, alphaVecRobot_);
-	rbd::paramToVector(mbcManip.alpha, alphaVecManip_);
+	rbd::paramToVector(mbcManip_.alpha, alphaVecManip_);
 
 	// Robot{J_i*alphaD + JD_i*alpha} =  Manip{J_i*alphaD + JD_i*alpha}
 
@@ -309,15 +311,15 @@ void ContactManipAccConstr::update(const rbd::MultiBody& mb, const rbd::MultiBod
 	{
 		// AEq = J_i
 		const MatrixXd& jacRobot = contRobot_[i].jac.jacobian(mb, mbc);
-		const MatrixXd& jacManip = contManip_[i].jac.jacobian(mbManip, mbcManip);
+		const MatrixXd& jacManip = contManip_[i].jac.jacobian(mbManip_, mbcManip_);
 		contRobot_[i].jac.fullJacobian(mb, jacRobot, fullJacRobot_);
-		contManip_[i].jac.fullJacobian(mbManip, jacManip, fullJacManip_);
+		contManip_[i].jac.fullJacobian(mbManip_, jacManip, fullJacManip_);
 		AEq_.block(i*6, 0, 6, mb.nrDof()) = -fullJacRobot_;
 		AEq_.block(i*6,mb.nrDof(),6,6) = fullJacManip_;
 
 		// BEq = -JD_i*alpha
 		const MatrixXd& jacDotRobot = contRobot_[i].jac.jacobianDot(mb, mbc);
-		const MatrixXd& jacDotManip = contManip_[i].jac.jacobianDot(mbManip, mbcManip);
+		const MatrixXd& jacDotManip = contManip_[i].jac.jacobianDot(mbManip_, mbcManip_);
 		contRobot_[i].jac.fullJacobian(mb, jacDotRobot, fullJacRobot_);
 		contManip_[i].jac.fullJacobian(mb, jacDotManip, fullJacManip_);
 		BEq_.segment(i*6, 6) = fullJacRobot_*alphaVecRobot_ - fullJacManip_*alphaVecManip_;

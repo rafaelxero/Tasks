@@ -1050,3 +1050,21 @@ BOOST_AUTO_TEST_CASE(QPManip)
 		
 	solver.nrVars(mb,{},{},robToManip,robToManip);
 }
+
+BOOST_AUTO_TEST_CASE(QPManipConstr)
+{
+	using namespace Eigen;
+	using namespace sva;
+	using namespace rbd;
+	using namespace tasks;
+	namespace cst = boost::math::constants;
+
+	MultiBody mb;
+	MultiBodyConfig mbc;
+	MultiBody mbManip;
+	MultiBodyConfig mbcManip;
+	
+	std::tie(mb, mbc) = makeZXZArm(false);
+	forwardKinematics(mb, mbc);
+	forwardVelocity(mb, mbc);
+}
