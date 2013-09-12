@@ -28,7 +28,7 @@
 
 // Tasks
 #include "QPSolver.h"
-
+#include "QPConstr.h"
 // forward declaration
 // SCD
 namespace SCD
@@ -50,23 +50,23 @@ public:
 	MotionManipConstr(const rbd::MultiBody& mb);
 
 	// Constraint
-	virtual void updateNrVars(const rbd::MultiBody& mb,
+	 void updateNrVars(const rbd::MultiBody& mb,
 		const SolverData& data);
 
-	virtual void update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc,
+	 void update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc,
 				const rbd::MultiBody& mbManip, const rbd::MultiBodyConfig& mbcManip);
 
 	// Equality Constraint
-	virtual int maxEq();
+	 int maxEq();
 
-	virtual const Eigen::MatrixXd& AEq() const;
-	virtual const Eigen::VectorXd& BEq() const;
+	 const Eigen::MatrixXd& AEq() const;
+	 const Eigen::VectorXd& BEq() const;
 
 	// Bound Constraint
-	virtual int beginVar();
+	 int beginVar();
 
-	virtual const Eigen::VectorXd& Lower() const;
-	virtual const Eigen::VectorXd& Upper() const;
+	 const Eigen::VectorXd& Lower() const;
+	 const Eigen::VectorXd& Upper() const;
 
 private:
 	struct ContactData
@@ -102,6 +102,51 @@ private:
 	Eigen::VectorXd BEq_;
 
 	Eigen::VectorXd XL_, XU_;
+
+	int nrDof_, nrFor_, nrTor_;
+};
+
+class ContactManipAccConstr : public ConstraintFunction<Equality>,
+		public ContactConstrCommon
+{
+public:
+	ContactManipAccConstr(const rbd::MultiBody& mb);
+
+	// Constraint
+	 void updateNrVars(const rbd::MultiBody& mb,
+		const SolverData& data);
+
+	 void update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc,
+		const rbd::MultiBody& mbManip, const rbd::MultiBodyConfig& mbcManip);
+
+	// Equality Constraint
+	 int maxEq();
+
+	 const Eigen::MatrixXd& AEq() const;
+	 const Eigen::VectorXd& BEq() const;
+
+private:
+	struct ContactData
+	{
+		ContactData(rbd::Jacobian j):
+			jac(j)
+		{}
+
+
+		rbd::Jacobian jac;
+	};
+
+private:
+	std::vector<ContactData> contManip_;
+	std::vector<ContactData> contRobot_;
+
+	Eigen::MatrixXd fullJacRobot_;
+	Eigen::MatrixXd fullJacManip_;
+	Eigen::VectorXd alphaVecRobot_;
+	Eigen::VectorXd alphaVecManip_;
+
+	Eigen::MatrixXd AEq_;
+	Eigen::VectorXd BEq_;
 
 	int nrDof_, nrFor_, nrTor_;
 };

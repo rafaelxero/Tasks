@@ -256,6 +256,91 @@ const Eigen::VectorXd& MotionManipConstr::Upper() const
 	return XU_;
 }
 
-} // Namespace qp
+ContactManipAccConstr::ContactManipAccConstr(const rbd::MultiBody& mb):
+	contManip_(),
+	contRobot_(),
+	fullJacRobot_(6, mb.nrDof()),
+	fullJacManip_(6,6),
+	alphaVecRobot_(mb.nrDof()),
+	alphaVecManip_(6),
+	AEq_(),
+	BEq_(),
+	nrDof_(0),
+	nrFor_(0),
+	nrTor_(0)
+{}
 
+
+void ContactManipAccConstr::updateNrVars(const rbd::MultiBody& mb,
+	const SolverData& data)
+{
+	contManip_.clear();
+	contRobot_.clear();
+	nrDof_ = data.alphaD();
+	nrFor_ = data.lambda();
+	nrTor_ = data.torque();
+
+	std::set<int> bodyIdSet = bodyIdInContact(mb, data);
+	for(int bodyId: bodyIdSet)
+	{
+		contRobot_.emplace_back(rbd::Jacobian(mb, bodyId));
+		contManip_.emplace_back(rbd::Jacobian(data.manipBody(),0));
+	}
+
+	AEq_.resize(contManip_.size()*6 , nrDof_ + nrFor_ + nrTor_);
+	BEq_.resize(contManip_.size()*6);
+
+	AEq_.setZero();
+	BEq_.setZero();
+}
+
+
+void ContactManipAccConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc,
+			const rbd::MultiBody& mbManip, const rbd::MultiBodyConfig& mbcManip)
+{
+	using namespace Eigen;
+
+	rbd::paramToVector(mbc.alpha, alphaVecRobot_);
+	rbd::paramToVector(mbcManip.alpha, alphaVecManip_);
+
+	// Robot{J_i*alphaD + JD_i*alpha} =  Manip{J_i*alphaD + JD_i*alpha}
+
+	for(std::size_t i = 0; i < contRobot_.size(); ++i)
+	{
+		// AEq = J_i
+		const MatrixXd& jacRobot = contRobot_[i].jac.jacobian(mb, mbc);
+		const MatrixXd& jacManip = contManip_[i].jac.jacobian(mbManip, mbcManip);
+		contRobot_[i].jac.fullJacobian(mb, jacRobot, fullJacRobot_);
+		contManip_[i].jac.fullJacobian(mbManip, jacManip, fullJacManip_);
+		AEq_.block(i*6, 0, 6, mb.nrDof()) = -fullJacRobot_;
+		AEq_.block(i*6,mb.nrDof(),6,6) = fullJacManip_;
+
+		// BEq = -JD_i*alpha
+		const MatrixXd& jacDotRobot = contRobot_[i].jac.jacobianDot(mb, mbc);
+		const MatrixXd& jacDotManip = contManip_[i].jac.jacobianDot(mbManip, mbcManip);
+		contRobot_[i].jac.fullJacobian(mb, jacDotRobot, fullJacRobot_);
+		contManip_[i].jac.fullJacobian(mb, jacDotManip, fullJacManip_);
+		BEq_.segment(i*6, 6) = fullJacRobot_*alphaVecRobot_ - fullJacManip_*alphaVecManip_;
+	}
+}
+
+
+int ContactManipAccConstr::maxEq()
+{
+	return int(AEq_.rows());
+}
+
+
+const Eigen::MatrixXd& ContactManipAccConstr::AEq() const
+{
+	return AEq_;
+}
+
+
+const Eigen::VectorXd& ContactManipAccConstr::BEq() const
+{
+	return BEq_;
+}
+
+} // Namespace qp
 } //Namespace Tasks
