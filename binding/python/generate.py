@@ -240,7 +240,8 @@ def build_qp(tasks):
   sol.add_constructor([])
   sol.add_method('update', retval('bool'),
                  [param('const rbd::MultiBody&', 'mb'),
-                  param('const rbd::MultiBodyConfig&', 'mbc')])
+                  param('const rbd::MultiBodyConfig&', 'mbc'),
+                  param('double','step')])
 
   sol.add_method('updateEqConstrSize', None, [])
   sol.add_method('updateInEqConstrSize', None, [])

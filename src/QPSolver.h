@@ -58,9 +58,9 @@ class QPSolver
 public:
 	QPSolver(bool silent=false);
 
-	bool update(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc);
-	bool updateQLD(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc);
-	bool updateLSSOL(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc);
+	bool update(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc, double step);
+	bool updateQLD(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc, double step);
+	bool updateLSSOL(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc, double step);
 
 	void updateEqConstrSize();
 	void updateInEqConstrSize();
@@ -111,7 +111,7 @@ protected:
 
 	void preUpdate(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc);
 	void postUpdate(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc,
-		bool success, const Eigen::VectorXd& result);
+		bool success, const Eigen::VectorXd& result, double step);
 
 private:
 	std::vector<Constraint*> constr_;

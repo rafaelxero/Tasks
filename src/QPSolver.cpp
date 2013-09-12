@@ -23,6 +23,9 @@
 // RBDyn
 #include <RBDyn/MultiBody.h>
 #include <RBDyn/MultiBodyConfig.h>
+#include <RBDyn/EulerIntegration.h>
+#include <RBDyn/FK.h>
+#include <RBDyn/FV.h>
 
 // Tasks
 #include "QL.h"
@@ -65,13 +68,13 @@ QPSolver::QPSolver(bool silent):
 }
 
 
-bool QPSolver::update(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc)
+bool QPSolver::update(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc, double step)
 {
-  return updateLSSOL(mb, mbc);
+  return updateLSSOL(mb, mbc, step);
 }
 
 
-bool QPSolver::updateQLD(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc)
+bool QPSolver::updateQLD(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc, double step)
 {
 	preUpdate(mb, mbc);
 
@@ -85,7 +88,7 @@ bool QPSolver::updateQLD(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc)
 			XL_, XU_, iter);
 		iter *= 10.;
 	}
-	postUpdate(mb, mbc, success, qld_.result());
+	postUpdate(mb, mbc, success, qld_.result(), step);
 
 	/*
 	while(!success && iter < 1e-3)
@@ -101,7 +104,7 @@ bool QPSolver::updateQLD(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc)
 }
 
 
-bool QPSolver::updateLSSOL(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc)
+bool QPSolver::updateLSSOL(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc, double step)
 {
 	preUpdate(mb, mbc);
 
@@ -110,7 +113,7 @@ bool QPSolver::updateLSSOL(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc)
 		A2_.block(0, 0, nrInEq_, data_.nrVars_), B2_.head(nrInEq_),
 		XL_, XU_);
 
-	postUpdate(mb, mbc, success, lssol_.result());
+	postUpdate(mb, mbc, success, lssol_.result(), step);
 
 	return success;
 }
@@ -523,7 +526,7 @@ void QPSolver::preUpdate(const rbd::MultiBody& mb, rbd::MultiBodyConfig& mbc)
 
 
 void QPSolver::postUpdate(const rbd::MultiBody& mb,
-	rbd::MultiBodyConfig& mbc, bool success, const Eigen::VectorXd& result)
+	rbd::MultiBodyConfig& mbc, bool success, const Eigen::VectorXd& result, double step)
 {
 	if(success)
 	{
@@ -536,6 +539,13 @@ void QPSolver::postUpdate(const rbd::MultiBody& mb,
 
 		// don't write contact force to the structure since contact force are used
 		// to compute C vector.
+		//Write manipulated object if it exists
+		if(data_.robotToManipBodyContacts().size()!=0)
+		{
+			rbd::eulerIntegration(data_.manipBody_, data_.manipBodyConfig_, step);
+			rbd::forwardKinematics(data_.manipBody_, data_.manipBodyConfig_);
+			rbd::forwardVelocity(data_.manipBody_, data_.manipBodyConfig_);
+		}
 	}
 }
 
