@@ -43,6 +43,7 @@
 #include "QPConstr.h"
 #include "QPSolver.h"
 #include "QPTasks.h"
+#include "QPManipConstr.h"
 
 /// @return An simple ZXZ arm with Y as up axis.
 std::tuple<rbd::MultiBody, rbd::MultiBodyConfig> makeZXZArm(bool isFixed=true)
@@ -1065,6 +1066,38 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 	MultiBodyConfig mbcManip;
 	
 	std::tie(mb, mbc) = makeZXZArm(false);
+
+	mbManip = MultiBody({mb.body(0)}, {Joint(Joint::Free, true, -1, "Root")}, {-1}, {0}, {-1}, {sva::PTransformd::Identity()});
+	mbcManip = MultiBodyConfig(mbManip);
+
 	forwardKinematics(mb, mbc);
 	forwardVelocity(mb, mbc);
+	forwardKinematics(mbManip, mbcManip);
+	forwardVelocity(mbManip, mbcManip);
+
+	std::vector<Eigen::Vector3d> points =
+	{
+		Vector3d(0.1, 0.1, 0.),
+		 Vector3d(-0.1, 0.1, 0.),
+		Vector3d(-0.1, -0.1, 0.),
+		Vector3d(0.1, -0.1, 0.)
+	};
+
+	qp::QPSolver solver(true);
+
+	solver.manipBody(mbManip,mbcManip);
+
+	std::vector<qp::UnilateralContact> robToManip =
+		{qp::UnilateralContact(0, points, Matrix3d::Identity(), 3, 0.7)};
+	std::vector<qp::UnilateralContact> manipToRob = robToManip;
+		
+	solver.nrVars(mb,{},{},robToManip,robToManip);
+	qp::MotionManipConstr motionCstr(mb);
+	qp::ContactManipAccConstr contactCstr(mb);
+	qp::PostureTask postureTsk(mb,{{0.},{0},{0}},10.,1.);
+	solver.addConstraint(&motionCstr);
+	solver.addConstraint(&contactCstr);
+	solver.addTask(&postureTsk);
+	solver.nrVars(mb,{},{},robToManip,manipToRob);
+	solver.update(mb,mbc,0.1);
 }

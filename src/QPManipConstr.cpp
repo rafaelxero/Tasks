@@ -12,10 +12,8 @@
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with Tasks.  If not, see <http://www.gnu.org/licenses/>.
-
 // associated header
 #include "QPManipConstr.h"
-
 // includes
 // std
 #include <set>
@@ -58,8 +56,10 @@ MotionManipConstr::ContactData::ContactData(const rbd::MultiBody& mb, int b,
 
 MotionManipConstr::MotionManipConstr(const rbd::MultiBody& mb):
 	fd_(mb),
+	fdManip_(mb),
 	cont_(),
 	fullJac_(6, mb.nrDof()),
+	fullJacRobot_(6, mb.nrDof()),
 	AEq_(),
 	BEq_(),
 	XL_(),
@@ -74,6 +74,7 @@ MotionManipConstr::MotionManipConstr(const rbd::MultiBody& mb):
 void MotionManipConstr::updateNrVars(const rbd::MultiBody& mb,
 	const SolverData& data)
 {
+	fdManip_ = rbd::MultiBody(data.manipBody());
 	mbManip_ = data.manipBody();
 	mbcManip_ = data.manipBodyConfig();
 	const auto& uniCont = data.unilateralContacts();
@@ -150,9 +151,8 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 	// AEq
 	//         nrDof      nrFor            nrTor
 	// nrDof [   H      -Sum J_i^t*ni     [0 ... -1]
-
-	AEq_.block(0, 0, nrDof_, nrDof_) << fd_.H(), MatrixXd::Zero(nrDof_-6,6),
-						MatrixXd::Zero(6,nrDof_-6), fdManip_.H();
+	AEq_.block(0, 0, nrDof_-6, nrDof_-6) << fd_.H();
+	AEq_.block(nrDof_-6, nrDof_-6, 6, 6) << fdManip_.H();
 
 	int contPos = nrDof_;
 	for(std::size_t i = 0; i < cont_.size(); ++i)
@@ -177,7 +177,7 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 			contPos += int(cont_[i].generatorsComp[j].cols());
 		}
 	}
-
+	fullJac_.resize(6,6);
 	for(std::size_t i = 0; i < contManip_.size(); ++i)
 	{
 		const MatrixXd& jacManip = contManip_[i].jac.jacobian(mbManip_, mbcManip_);
@@ -201,22 +201,19 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 				contRobot_[i].points[j], contRobot_[i].jacTrans);
 			contRobot_[i].jac.fullJacobian(mb, contRobot_[i].jacTrans, fullJacRobot_);
 
+
 			AEq_.block(0, contPos, nrDof_-6, contManip_[i].generatorsComp[j].cols()) =
 				-fullJacRobot_.block(3, 0, 3, fullJacRobot_.cols()).transpose()*
 					contRobot_[i].generatorsComp[j];
 			AEq_.block(nrDof_-6, contPos, 6, contManip_[i].generatorsComp[j].cols()) =
 				-fullJac_.block(3, 0, 3, fullJac_.cols()).transpose()*
 					contManip_[i].generatorsComp[j];
-
-			contPos += int(cont_[i].generatorsComp[j].cols());
+			contPos += int(contManip_[i].generatorsComp[j].cols());
 		}
 	}
-
-
-
 	AEq_.block(mb.joint(0).dof(), contPos, nrTor_, nrTor_) =
 		-MatrixXd::Identity(nrTor_, nrTor_);
-
+	
 	// BEq = -C
 	BEq_ << -fd_.C(),-fdManip_.C();
 }
