@@ -1070,6 +1070,7 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 
 	mbManip = MultiBody({mb.body(0)}, {Joint(Joint::Free, true, -1, "Root")}, {-1}, {0}, {-1}, {sva::PTransformd::Identity()});
 	mbcManip = MultiBodyConfig(mbManip);
+	mbcManip.zero(mbManip);
 
 	forwardKinematics(mb, mbc);
 	forwardVelocity(mb, mbc);
@@ -1095,10 +1096,13 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 	solver.nrVars(mb,{},{},robToManip,robToManip);
 	qp::MotionManipConstr motionCstr(mb);
 	qp::ContactManipAccConstr contactCstr(mb);
-	qp::PostureTask postureTsk(mb,{{0.},{0},{0}},10.,1.);
+	qp::PostureTask postureTsk(mb,{{0.},{0},{0},{0}},10.,1.);
 	solver.addConstraint(&motionCstr);
 	solver.addConstraint(&contactCstr);
 	solver.addTask(&postureTsk);
+	solver.updateEqConstrSize();
+	solver.updateInEqConstrSize();
 	solver.nrVars(mb,{},{},robToManip,manipToRob);
+
 	solver.update(mb,mbc,0.1);
 }
