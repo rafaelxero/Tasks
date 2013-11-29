@@ -180,9 +180,8 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 	fullJac_.resize(6,6);
 	for(std::size_t i = 0; i < contManip_.size(); ++i)
 	{
-		const MatrixXd& jacManip = contManip_[i].jac.jacobian(mbManip_, mbcManip_);
 		const MatrixXd& jacRobot = contRobot_[i].jac.jacobian(mb, mbc);
-
+		const MatrixXd& jacManip = contManip_[i].jac.jacobian(mbManip_, mbcManip_);
 		// for each contact point we compute all the torques
 		// due to each generator of the friction cone
 		for(std::size_t j = 0; j < contManip_[i].points.size(); ++j)

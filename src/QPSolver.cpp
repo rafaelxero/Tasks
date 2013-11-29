@@ -534,17 +534,21 @@ void QPSolver::postUpdate(const rbd::MultiBody& mb,
 		int dof0 = mb.joint(0).dof();
 		torqueRes_.segment(dof0, mb.nrDof() - dof0) = result.tail(data_.torque_);
 
-		rbd::vectorToParam(res_.head(data_.alphaD_), mbc.alphaD);
 		rbd::vectorToParam(torqueRes_, mbc.jointTorque);
-
 		// don't write contact force to the structure since contact force are used
 		// to compute C vector.
 		//Write manipulated object if it exists
 		if(data_.robotToManipBodyContacts().size()!=0)
 		{
+			rbd::vectorToParam(res_.head(data_.alphaD_-6), mbc.alphaD);
+			rbd::vectorToParam(res_.segment(data_.alphaD_-6,6), data_.manipBodyConfig_.alphaD);
 			rbd::eulerIntegration(data_.manipBody_, data_.manipBodyConfig_, step);
 			rbd::forwardKinematics(data_.manipBody_, data_.manipBodyConfig_);
 			rbd::forwardVelocity(data_.manipBody_, data_.manipBodyConfig_);
+		}
+		else
+		{
+			rbd::vectorToParam(res_.head(data_.alphaD_), mbc.alphaD);
 		}
 	}
 }

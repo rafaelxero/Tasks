@@ -1040,6 +1040,7 @@ BOOST_AUTO_TEST_CASE(QPManip)
 	using namespace tasks;
 	namespace cst = boost::math::constants;
 
+
 	MultiBody mb;
 	MultiBodyConfig mbc;
 
@@ -1078,10 +1079,13 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 	MultiBodyConfig mbc;
 	MultiBody mbManip;
 	MultiBodyConfig mbcManip;
+	Body manipBody;
+	sva::PTransformd toLastJoint(Vector3d(0,1,0));
+	manipBody = Body(1, Eigen::Vector3d(0,1,0), Eigen::Matrix3d::Identity(), 0, "manip");
 	
 	std::tie(mb, mbc) = makeZXZArm(false);
 
-	mbManip = MultiBody({mb.body(0)}, {Joint(Joint::Free, true, -1, "Root")}, {-1}, {0}, {-1}, {sva::PTransformd::Identity()});
+	mbManip = MultiBody({manipBody}, {Joint(Joint::Free, true, -1, "Root")}, {-1}, {0}, {-1}, {toLastJoint});
 	mbcManip = MultiBodyConfig(mbManip);
 	mbcManip.zero(mbManip);
 
@@ -1103,13 +1107,15 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 	solver.manipBody(mbManip,mbcManip);
 
 	std::vector<qp::UnilateralContact> robToManip =
-		{qp::UnilateralContact(0, points, Matrix3d::Identity(), 3, 0.7)};
-	std::vector<qp::UnilateralContact> manipToRob = robToManip;
-		
-	solver.nrVars(mb,{},{},robToManip,robToManip);
+		{qp::UnilateralContact(mbManip.bodyIndexById(0), points, Matrix3d::Identity(), 3, 0.7)};
+	std::vector<qp::UnilateralContact> manipToRob =
+		{qp::UnilateralContact(mb.bodyIndexById(1), points, Matrix3d::Identity(), 3, 0.7)};
+	solver.nrVars(mb,{},{},robToManip,manipToRob);
 	qp::MotionManipConstr motionCstr(mb);
 	qp::ContactManipAccConstr contactCstr(mb);
-	qp::PostureTask postureTsk(mb,{{0.},{0},{0},{0}},10.,1.);
+	qp::PostureTask postureTsk(mb,{{0.1},{0.1},{0.1},{0.1}},10.,1.);
+	qp::TorqueLimitsConstr torqueCstr(mb,{{-0.1},{-0.1},{-0.1},{-0.1}},{{0.1},{0.1},{0.1},{0.1}});
+	solver.addConstraint(&torqueCstr);
 	solver.addConstraint(&motionCstr);
 	solver.addConstraint(&contactCstr);
 	solver.addTask(&postureTsk);
