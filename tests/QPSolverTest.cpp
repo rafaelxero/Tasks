@@ -16,6 +16,7 @@
 // includes
 // std
 #include <iostream>
+#include <fstream>
 #include <tuple>
 
 // boost
@@ -100,6 +101,18 @@ std::tuple<rbd::MultiBody, rbd::MultiBodyConfig> makeZXZArm(bool isFixed=true)
 	return std::make_tuple(mb, mbc);
 }
 
+void writeFK(std::ofstream& outfile, const rbd::MultiBodyConfig& mbc)
+{
+	outfile << "[";
+	for(const sva::PTransformd& pt: mbc.bodyPosW)
+	{
+		outfile << "[";
+		outfile << pt.translation()[0] << "," << pt.translation()[1] << "," << pt.translation()[2];
+		outfile << "],";
+	}
+	outfile << "],";
+	outfile << std::endl;
+}
 
 
 BOOST_AUTO_TEST_CASE(FrictionConeTest)
@@ -1103,6 +1116,23 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
 	solver.nrVars(mb,{},{},robToManip,manipToRob);
-
-	solver.update(mb,mbc,0.1);
+	std::ofstream outfile, outfile2;
+	outfile2.open("qpmanipbody.py");
+	outfile.open("qpmaniptest.py");
+	outfile << "bodyPos=[";
+	outfile2 << "bodyPos=[";
+	std::cout<<"Ok"<<std::endl;
+	for(int i = 0; i < 1000; i++)
+	{
+		solver.update(mb,mbc,0.01);
+		eulerIntegration(mb, mbc, 0.01);
+		forwardKinematics(mb, mbc);
+		forwardVelocity(mb, mbc);
+		writeFK(outfile, mbc);
+		writeFK(outfile2, mbcManip);
+		outfile.flush();
+		outfile2.flush();
+	}
+	outfile << "]" << std::endl;
+	outfile2 << "]" << std::endl;
 }
