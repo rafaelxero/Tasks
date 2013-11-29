@@ -31,3 +31,4 @@ if(${POSTURE_GENERATOR})
   add_test(PGUnit PGTest)
 endif()
 
+file(COPY "render.py" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
