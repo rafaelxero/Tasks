@@ -569,6 +569,11 @@ void QPSolver::manipBodyConfig(const rbd::MultiBodyConfig& body)
 	data_.manipBodyConfig(body);
 }
 
+rbd::MultiBodyConfig QPSolver::manipBodyConfig()
+{
+	return data_.manipBodyConfig();
+}
+
 } // namespace qp
 
 } // namespace tasks

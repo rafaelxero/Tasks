@@ -1109,35 +1109,35 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 	std::vector<qp::UnilateralContact> robToManip =
 		{qp::UnilateralContact(mbManip.bodyIndexById(0), points, Matrix3d::Identity(), 3, 0.7)};
 	std::vector<qp::UnilateralContact> manipToRob =
-		{qp::UnilateralContact(mb.bodyIndexById(1), points, Matrix3d::Identity(), 3, 0.7)};
+		{qp::UnilateralContact(mb.bodyIndexById(2), points, -1*Matrix3d::Identity(), 3, 0.7)};
 	solver.nrVars(mb,{},{},robToManip,manipToRob);
 	qp::MotionManipConstr motionCstr(mb);
 	qp::ContactManipAccConstr contactCstr(mb);
 	qp::PostureTask postureTsk(mb,{{0.1},{0.1},{0.1},{0.1}},10.,1.);
 	qp::TorqueLimitsConstr torqueCstr(mb,{{-0.1},{-0.1},{-0.1},{-0.1}},{{0.1},{0.1},{0.1},{0.1}});
-	solver.addConstraint(&torqueCstr);
+	//solver.addConstraint(&torqueCstr);
+	solver.addEqualityConstraint(&motionCstr);
 	solver.addConstraint(&motionCstr);
 	solver.addConstraint(&contactCstr);
+	solver.addEqualityConstraint(&contactCstr);
 	solver.addTask(&postureTsk);
+	solver.nrVars(mb,{},{},robToManip,manipToRob);
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
-	solver.nrVars(mb,{},{},robToManip,manipToRob);
 	std::ofstream outfile, outfile2;
 	outfile2.open("qpmanipbody.py");
 	outfile.open("qpmaniptest.py");
 	outfile << "bodyPos=[";
 	outfile2 << "bodyPos=[";
-	std::cout<<"Ok"<<std::endl;
 	for(int i = 0; i < 1000; i++)
 	{
 		solver.update(mb,mbc,0.01);
+		rbd::paramToVector(mbcManip.alphaD, q);
 		eulerIntegration(mb, mbc, 0.01);
 		forwardKinematics(mb, mbc);
 		forwardVelocity(mb, mbc);
 		writeFK(outfile, mbc);
-		writeFK(outfile2, mbcManip);
-		outfile.flush();
-		outfile2.flush();
+		writeFK(outfile2, solver.manipBodyConfig());
 	}
 	outfile << "]" << std::endl;
 	outfile2 << "]" << std::endl;

@@ -103,6 +103,7 @@ public:
 	void manipBody(const rbd::MultiBody& body);
 	void manipBody(const rbd::MultiBody& body, const rbd::MultiBodyConfig& bodyConfig);
 	void manipBodyConfig(const rbd::MultiBodyConfig& body);
+	rbd::MultiBodyConfig manipBodyConfig();
 
 protected:
 	void updateSolverSize(int nrVar, int nrEq, int nrIneq);

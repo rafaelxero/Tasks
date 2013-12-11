@@ -17,7 +17,6 @@
 // includes
 // std
 #include <set>
-
 // RBDyn
 #include <RBDyn/MultiBody.h>
 #include <RBDyn/MultiBodyConfig.h>
@@ -201,7 +200,7 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 			contRobot_[i].jac.fullJacobian(mb, contRobot_[i].jacTrans, fullJacRobot_);
 
 
-			AEq_.block(0, contPos, nrDof_-6, contManip_[i].generatorsComp[j].cols()) =
+			AEq_.block(0, contPos, nrDof_-6, contRobot_[i].generatorsComp[j].cols()) =
 				-fullJacRobot_.block(3, 0, 3, fullJacRobot_.cols()).transpose()*
 					contRobot_[i].generatorsComp[j];
 			AEq_.block(nrDof_-6, contPos, 6, contManip_[i].generatorsComp[j].cols()) =
@@ -210,9 +209,8 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 			contPos += int(contManip_[i].generatorsComp[j].cols());
 		}
 	}
-	AEq_.block(mb.joint(0).dof(), contPos, nrTor_, nrTor_) =
+	AEq_.block(mb.joint(0).dof()+6, contPos, nrTor_, nrTor_) =
 		-MatrixXd::Identity(nrTor_, nrTor_);
-	
 	// BEq = -C
 	BEq_ << -fd_.C(),-fdManip_.C();
 }
@@ -305,7 +303,7 @@ void ContactManipAccConstr::update(const rbd::MultiBody& mb, const rbd::MultiBod
 
 	for(std::size_t i = 0; i < contRobot_.size(); ++i)
 	{
-		// AEq = J_i
+		// AEq = [-Robot{J_i}  Manip{J_i} ]
 		const MatrixXd& jacRobot = contRobot_[i].jac.jacobian(mb, mbc);
 		const MatrixXd& jacManip = contManip_[i].jac.jacobian(mbManip_, mbcManip_);
 		contRobot_[i].jac.fullJacobian(mb, jacRobot, fullJacRobot_);
