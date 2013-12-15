@@ -1083,7 +1083,7 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 	sva::PTransformd toLastJoint(Vector3d(0,1,0));
 	manipBody = Body(1, Eigen::Vector3d(0,1,0), Eigen::Matrix3d::Identity(), 0, "manip");
 	
-	std::tie(mb, mbc) = makeZXZArm(false);
+	std::tie(mb, mbc) = makeZXZArm(true);
 
 	mbManip = MultiBody({manipBody}, {Joint(Joint::Free, true, -1, "Root")}, {-1}, {0}, {-1}, {toLastJoint});
 	mbcManip = MultiBodyConfig(mbManip);
@@ -1132,7 +1132,6 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 	for(int i = 0; i < 1000; i++)
 	{
 		solver.update(mb,mbc,0.01);
-		rbd::paramToVector(mbcManip.alphaD, q);
 		eulerIntegration(mb, mbc, 0.01);
 		forwardKinematics(mb, mbc);
 		forwardVelocity(mb, mbc);
