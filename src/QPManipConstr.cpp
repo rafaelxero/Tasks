@@ -108,7 +108,7 @@ void MotionManipConstr::updateNrVars(const rbd::MultiBody& mb,
 	iCont = 0;
 	for(const UnilateralContact& c: manipCont)
 	{
-		contManip_[iCont] = ContactData(mb, c.bodyId, c.points,
+		contManip_[iCont] = ContactData(mbManip_, c.bodyId, c.points,
 			std::vector<FrictionCone>(c.points.size(), c.cone));
 		++iCont;
 	}
