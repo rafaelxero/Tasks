@@ -247,6 +247,15 @@ std::set<int> ContactConstrCommon::bodyIdInContact(const rbd::MultiBody& mb,
 		}
 	}
 
+	for(const UnilateralContact& c: data.manipBodyToRobotContacts())
+	{
+		if(isValid(c.bodyId))
+		{
+			ret.insert(c.bodyId);
+		}
+	}
+
+
 	return std::move(ret);
 }
 
