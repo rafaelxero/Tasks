@@ -25,6 +25,6 @@ if __name__ == '__main__':
     line.set_data(X, Y)
     return line, time_text
 
-  ani = animation.FuncAnimation(fig, animate, np.arange(1, len(bodyPos)), interval=20)
+  ani = animation.FuncAnimation(fig, animate, np.arange(1, len(bodyPos)), interval=20, repeat=False)
 
   plt.show()
