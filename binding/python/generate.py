@@ -194,12 +194,15 @@ def build_qp(tasks):
 
   gripperTorqueConstr = qp.add_class('GripperTorqueConstr', parent=[ineqConstr, constr])
 
+  motionManipConstr = qp.add_class('MotionManipConstr', parent=[eqConstr, boundConstr, constr])
+  contactManipAccConstr = qp.add_class('ContactManipAccConstr', parent=[eqConstr, constr, contactConstrCommon])
 
   constrName = ['MotionConstr', 'ContactAccConstr', 'ContactSpeedConstr',
                 'SelfCollisionConstr', 'JointLimitsConstr', 'DamperJointLimitsConstr',
                 'StaticEnvCollisionConstr', 'TorqueLimitsConstr',
-                'GripperTorqueConstr']
-  eqConstrName = ['MotionConstr', 'ContactAccConstr', 'ContactSpeedConstr']
+                'GripperTorqueConstr', 'MotionManipConstr', 'ContactManipAccConstr']
+  eqConstrName = ['MotionConstr', 'ContactAccConstr', 'ContactSpeedConstr',
+                  'MotionManipConstr', 'ContactManipAccConstr']
   ineqConstrName = ['SelfCollisionConstr', 'StaticEnvCollisionConstr',
                     'GripperTorqueConstr']
   boundConstrName = ['MotionConstr', 'JointLimitsConstr', 'DamperJointLimitsConstr',
@@ -212,7 +215,7 @@ def build_qp(tasks):
   constrList = [motionConstr, contactAccConstr, contactSpeedConstr,
                 selfCollisionConstr, seCollisionConstr,
                 jointLimitsConstr, damperJointLimitsConstr, torqueLimitsConstr,
-                gripperTorqueConstr]
+                gripperTorqueConstr, motionManipConstr, contactManipAccConstr]
 
 
   # build list type
@@ -666,6 +669,12 @@ def build_qp(tasks):
   gripperTorqueConstr.add_method('rmGripper', retval('bool'),
                                  [param('int', 'bodyId')])
   gripperTorqueConstr.add_method('reset', None, [])
+  
+  # MotionManipConstr
+  motionManipConstr.add_constructor([param('const rbd::MultiBody&', 'mb')])
+ 
+  # ContactManipAccConstr
+  contactManipAccConstr.add_constructor([param('const rbd::MultiBody&', 'mb')]) 
 
   def add_add_remove_solver(constr):
     for c in constr:
@@ -685,6 +694,7 @@ if __name__ == '__main__':
   tasks.add_include('<QPSolver.h>')
   tasks.add_include('<QPTasks.h>')
   tasks.add_include('<QPConstr.h>')
+  tasks.add_include('<QPManipConstr.h>')
 
   tasks.add_include('<RBDyn/MultiBodyConfig.h>')
 
