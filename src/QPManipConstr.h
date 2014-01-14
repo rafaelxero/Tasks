@@ -138,6 +138,7 @@ private:
 	};
 
 private:
+	std::vector<ContactData> cont_;
 	std::vector<ContactData> contManip_;
 	std::vector<ContactData> contRobot_;
 

@@ -270,6 +270,7 @@ void ContactManipAccConstr::updateNrVars(const rbd::MultiBody& mb,
 {
 	mbManip_ = &data.manipBody();
 	mbcManip_ = &data.manipBodyConfig();
+	cont_.clear();
 	contManip_.clear();
 	contRobot_.clear();
 	nrDof_ = data.alphaD();
@@ -279,12 +280,23 @@ void ContactManipAccConstr::updateNrVars(const rbd::MultiBody& mb,
 	std::set<int> bodyIdSet = bodyIdInContact(mb, data);
 	for(int bodyId: bodyIdSet)
 	{
-		contRobot_.emplace_back(rbd::Jacobian(mb, bodyId));
-		contManip_.emplace_back(rbd::Jacobian(data.manipBody(),0));
+		cont_.emplace_back(rbd::Jacobian(mb, bodyId));
 	}
 
-	AEq_.resize(contManip_.size()*6 , nrDof_ + nrFor_ + nrTor_);
-	BEq_.resize(contManip_.size()*6);
+	for(const UnilateralContact& c: data.manipBodyToRobotContacts())
+	{
+		contRobot_.emplace_back(rbd::Jacobian(mb, c.bodyId));
+	}
+
+	for(const UnilateralContact& c: data.robotToManipBodyContacts())
+	{
+		contManip_.emplace_back(rbd::Jacobian(data.manipBody(), c.bodyId));
+	}
+
+	auto size = cont_.size() + contRobot_.size();
+
+	AEq_.resize(size*6 , nrDof_ + nrFor_ + nrTor_);
+	BEq_.resize(size*6);
 
 	AEq_.setZero();
 	BEq_.setZero();
@@ -297,8 +309,22 @@ void ContactManipAccConstr::update(const rbd::MultiBody& mb, const rbd::MultiBod
 
 	rbd::paramToVector(mbc.alpha, alphaVecRobot_);
 	rbd::paramToVector(mbcManip_->alpha, alphaVecManip_);
-
+	int offset = 0;
 	// Robot{J_i*alphaD + JD_i*alpha} =  Manip{J_i*alphaD + JD_i*alpha}
+
+	for(std::size_t i = 0; i < cont_.size(); ++i)
+	{
+		// AEq = [-Robot{J_i}  Manip{J_i} ]
+		const MatrixXd& jacRobot = cont_[i].jac.jacobian(mb, mbc);
+		cont_[i].jac.fullJacobian(mb, jacRobot, fullJacRobot_);
+		AEq_.block(i*6, 0, 6, mb.nrDof()) = -fullJacRobot_;
+
+		// BEq = -JD_i*alpha
+		const MatrixXd& jacDotRobot = cont_[i].jac.jacobianDot(mb, mbc);
+		cont_[i].jac.fullJacobian(mb, jacDotRobot, fullJacRobot_);
+		BEq_.segment(i*6, 6) = fullJacRobot_*alphaVecRobot_;
+		++offset;
+	}
 
 	for(std::size_t i = 0; i < contRobot_.size(); ++i)
 	{
@@ -307,15 +333,15 @@ void ContactManipAccConstr::update(const rbd::MultiBody& mb, const rbd::MultiBod
 		const MatrixXd& jacManip = contManip_[i].jac.jacobian(*mbManip_, *mbcManip_);
 		contRobot_[i].jac.fullJacobian(mb, jacRobot, fullJacRobot_);
 		contManip_[i].jac.fullJacobian(*mbManip_, jacManip, fullJacManip_);
-		AEq_.block(i*6, 0, 6, mb.nrDof()) = -fullJacRobot_;
-		AEq_.block(i*6,mb.nrDof(),6,6) = fullJacManip_;
+		AEq_.block((offset+i)*6, 0, 6, mb.nrDof()) = -fullJacRobot_;
+		AEq_.block((offset+i)*6,mb.nrDof(),6,6) = fullJacManip_;
 
 		// BEq = -JD_i*alpha
 		const MatrixXd& jacDotRobot = contRobot_[i].jac.jacobianDot(mb, mbc);
 		const MatrixXd& jacDotManip = contManip_[i].jac.jacobianDot(*mbManip_, *mbcManip_);
 		contRobot_[i].jac.fullJacobian(mb, jacDotRobot, fullJacRobot_);
 		contManip_[i].jac.fullJacobian(mb, jacDotManip, fullJacManip_);
-		BEq_.segment(i*6, 6) = fullJacRobot_*alphaVecRobot_ - fullJacManip_*alphaVecManip_;
+		BEq_.segment((offset+i)*6, 6) = fullJacRobot_*alphaVecRobot_ - fullJacManip_*alphaVecManip_;
 	}
 }
 
