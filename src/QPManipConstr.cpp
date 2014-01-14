@@ -199,17 +199,16 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 				contRobot_[i].points[j], contRobot_[i].jacTrans);
 			contRobot_[i].jac.fullJacobian(mb, contRobot_[i].jacTrans, fullJacRobot_);
 
-
 			AEq_.block(0, contPos, nrDof_-6, contRobot_[i].generatorsComp[j].cols()) =
 				-fullJacRobot_.block(3, 0, 3, fullJacRobot_.cols()).transpose()*
 					contRobot_[i].generatorsComp[j];
 			AEq_.block(nrDof_-6, contPos, 6, contManip_[i].generatorsComp[j].cols()) =
 				-fullJac_.block(3, 0, 3, fullJac_.cols()).transpose()*
-					contManip_[i].generatorsComp[j];
+					-contRobot_[i].generatorsComp[j];
 			contPos += int(contManip_[i].generatorsComp[j].cols());
 		}
 	}
-	AEq_.block(mb.joint(0).dof()+6, contPos, nrTor_, nrTor_) =
+	AEq_.block(mb.joint(0).dof(), contPos, nrTor_, nrTor_) =
 		-MatrixXd::Identity(nrTor_, nrTor_);
 	// BEq = -C
 	BEq_ << -fd_.C(),-fdManip_.C();

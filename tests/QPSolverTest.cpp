@@ -1082,16 +1082,18 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 	Body manipBody;
 	
 	std::tie(mb, mbc) = makeZXZArm(true);
-	mbc.q[1][0] = 0.1;
+	mbc.q[1][0] = 1./4*cst::pi<double>();
 	forwardKinematics(mb, mbc);
 	forwardVelocity(mb, mbc);
 	sva::PTransformd toLastJoint = mbc.bodyPosW[3];
 
-	manipBody = Body(100, toLastJoint.translation(), Eigen::Matrix3d::Identity(), 0, "manip");
-	mbManip = MultiBody({manipBody}, {Joint(Joint::Free, true, -1, "Root")}, {-1}, {0}, {-1}, {toLastJoint});
+	manipBody = Body(100, Eigen::Vector3d::Zero(), 0.1*Eigen::Matrix3d::Identity(), 0, "manip");
+	mbManip = MultiBody({manipBody}, {Joint(Joint::Free, true, -1, "Root")}, {-1}, {0}, {-1}, {sva::PTransformd::Identity()});
 	mbcManip = MultiBodyConfig(mbManip);
 	mbcManip.zero(mbManip);
-
+	Eigen::Quaterniond oriManip(toLastJoint.rotation());
+	Eigen::Vector3d transManip(toLastJoint.translation());
+	mbcManip.q[0] = {oriManip.w(), oriManip.x(), oriManip.y(), oriManip.z(), transManip.x(), transManip.y(), transManip.z()};
 	forwardKinematics(mbManip, mbcManip);
 	forwardVelocity(mbManip, mbcManip);
 
@@ -1107,11 +1109,21 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 
 	solver.manipBody(mbManip,mbcManip);
 
+	Eigen::Matrix3d rot;
+	rot  << 1,0,0,
+		0,0,-1,
+		0,1,0;
+
 	std::vector<qp::UnilateralContact> robToManip =
-		{qp::UnilateralContact(mbManip.bodyIndexById(0), points, -1*Matrix3d::Identity(), 3, 0.7)};
+		{qp::UnilateralContact(mbManip.bodyIndexById(0), points, rot, 3, 0.7)};
+
+	rot  << 1,0,0,
+		0,0,1,
+		0,-1,0;
+
 	std::vector<qp::UnilateralContact> manipToRob =
-		{qp::UnilateralContact(mb.bodyIndexById(2), points, Matrix3d::Identity(), 3, 0.7)};
-	solver.nrVars(mb,{},{},robToManip,manipToRob);
+		{qp::UnilateralContact(mb.bodyIndexById(2), points, rot, 3, 0.7)};
+
 	qp::MotionManipConstr motionCstr(mb);
 	qp::ContactManipAccConstr contactCstr(mb);
 	qp::PostureTask postureTsk(mb,{{0.1},{0.1},{0.1},{0.1}},10.,1.);
@@ -1122,7 +1134,7 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 	motionCstr.addToSolver(solver);
 	solver.addConstraint(&contactCstr);
 	solver.addEqualityConstraint(&contactCstr);
-	solver.addTask(&postureTsk);
+	//solver.addTask(&postureTsk);
 	solver.nrVars(mb,{},{},robToManip,manipToRob);
 	solver.updateEqConstrSize();
 	solver.updateInEqConstrSize();
@@ -1133,12 +1145,23 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 	outfile2 << "bodyPos=[";
 	for(int i = 0; i < 1000; i++)
 	{
-		std::cout<< solver.update(mb,mbc,0.01) << std::endl;
-		eulerIntegration(mb, mbc, 0.01);
-		forwardKinematics(mb, mbc);
-		forwardVelocity(mb, mbc);
-		writeFK(outfile, mbc);
-		writeFK(outfile2, solver.manipBodyConfig());
+		if(solver.update(mb,mbc,0.001))
+		{
+			eulerIntegration(mb, mbc, 0.001);
+			forwardKinematics(mb, mbc);
+			forwardVelocity(mb, mbc);
+			writeFK(outfile, mbc);
+			writeFK(outfile2, solver.manipBodyConfig());
+			std::cout << solver.lambdaVec().transpose() << std::endl;
+			std::cout << robToManip[0].force(solver.lambdaVec()).transpose() << std::endl;
+			std::cout << manipToRob[0].force(solver.lambdaVec()).transpose() << std::endl;
+			std::cout << std::endl;
+		}
+		else
+		{
+			std::cout << i << " iterations" << std::endl;
+			break;
+		}
 	}
 	outfile << "]" << std::endl;
 	outfile2 << "]" << std::endl;
