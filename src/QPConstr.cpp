@@ -393,7 +393,7 @@ void ContactSpeedConstr::updateNrVars(const rbd::MultiBody& mb,
 		cont_.emplace_back(rbd::Jacobian(mb, bodyId));
 	}
 
-	AEq_.resize(cont_.size()*6 , nrDof_ + nrFor_ + nrTor_);
+	AEq_.resize(cont_.size()*6 , data.nrVars());
 	BEq_.resize(cont_.size()*6);
 
 	AEq_.setZero();

@@ -152,7 +152,8 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 	// nrDof [   H      -Sum J_i^t*ni     [0 ... -1]
 	AEq_.block(0, 0, nrDof_-6, nrDof_-6) << fd_.H();
 	AEq_.block(nrDof_-6, nrDof_-6, 6, 6) << fdManip_.H();
-
+	
+	fullJac_.resize(6, mb.nrDof());
 	int contPos = nrDof_;
 	for(std::size_t i = 0; i < cont_.size(); ++i)
 	{
@@ -169,7 +170,7 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 				cont_[i].points[j], cont_[i].jacTrans);
 			cont_[i].jac.fullJacobian(mb, cont_[i].jacTrans, fullJac_);
 
-			AEq_.block(0, contPos, nrDof_, cont_[i].generatorsComp[j].cols()) =
+			AEq_.block(0, contPos, nrDof_-6, cont_[i].generatorsComp[j].cols()) =
 				-fullJac_.block(3, 0, 3, fullJac_.cols()).transpose()*
 					cont_[i].generatorsComp[j];
 
