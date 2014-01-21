@@ -92,11 +92,11 @@ private:
 
 	const rbd::MultiBody *mbManip_;
 	const rbd::MultiBodyConfig *mbcManip_;
-	
+
 	std::vector<ContactData> cont_;
 	Eigen::MatrixXd fullJac_;
 	Eigen::MatrixXd fullJacRobot_;
-	
+
 	std::vector<ContactData> contManip_;
 	std::vector<ContactData> contRobot_;
 
@@ -152,6 +152,60 @@ private:
 
 	Eigen::MatrixXd AEq_;
 	Eigen::VectorXd BEq_;
+
+	int nrDof_, nrFor_, nrTor_;
+};
+
+class ContactManipSpeedConstr : public ConstraintFunction<Equality>,
+		public ContactConstrCommon
+{
+public:
+	ContactManipSpeedConstr(const rbd::MultiBody& mb, double timeStep);
+
+	// Constraint
+	 void updateNrVars(const rbd::MultiBody& mb,
+		const SolverData& data);
+
+	 void update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc);
+
+	// Equality Constraint
+	 int maxEq();
+
+	 const Eigen::MatrixXd& AEq() const;
+	 const Eigen::VectorXd& BEq() const;
+
+private:
+	struct ContactData
+	{
+		ContactData(rbd::Jacobian j, sva::PTransformd tf):
+			jac(j),
+			jacTrans(6, j.dof()),
+			body(j.jointsPath().back()),
+			toSurface(tf)
+		{}
+		rbd::Jacobian jac;
+		Eigen::MatrixXd jacTrans;
+		int body;
+		sva::PTransformd toSurface;
+	};
+
+private:
+	std::vector<ContactData> cont_;
+	std::vector<ContactData> contManip_;
+	std::vector<ContactData> contRobot_;
+
+	const rbd::MultiBody *mbManip_;
+	const rbd::MultiBodyConfig *mbcManip_;
+
+	Eigen::MatrixXd fullJacRobot_;
+	Eigen::MatrixXd fullJacManip_;
+	Eigen::VectorXd alphaVecRobot_;
+	Eigen::VectorXd alphaVecManip_;
+
+	Eigen::MatrixXd AEq_;
+	Eigen::VectorXd BEq_;
+
+	double timeStep_;
 
 	int nrDof_, nrFor_, nrTor_;
 };

@@ -364,5 +364,122 @@ const Eigen::VectorXd& ContactManipAccConstr::BEq() const
 	return BEq_;
 }
 
+ContactManipSpeedConstr::ContactManipSpeedConstr(const rbd::MultiBody& mb, double timeStep):
+	contManip_(),
+	contRobot_(),
+	fullJacRobot_(6, mb.nrDof()),
+	fullJacManip_(6,6),
+	alphaVecRobot_(mb.nrDof()),
+	alphaVecManip_(6),
+	AEq_(),
+	BEq_(),
+	timeStep_(timeStep),
+	nrDof_(0),
+	nrFor_(0),
+	nrTor_(0)
+{}
+
+
+void ContactManipSpeedConstr::updateNrVars(const rbd::MultiBody& mb,
+	const SolverData& data)
+{
+	mbManip_ = &data.manipBody();
+	mbcManip_ = &data.manipBodyConfig();
+	cont_.clear();
+	contManip_.clear();
+	contRobot_.clear();
+	nrDof_ = data.alphaD();
+	nrFor_ = data.lambda();
+	nrTor_ = data.torque();
+
+	std::set<int> bodyIdSet = bodyIdInContact(mb, data);
+	for(int bodyId: bodyIdSet)
+	{
+		cont_.emplace_back(rbd::Jacobian(mb, bodyId), sva::PTransformd::Identity());
+	}
+
+	for(const ManipContact& c: data.manipBodyToRobotContacts())
+	{
+		contRobot_.emplace_back(rbd::Jacobian(mb, c.contact.bodyId), c.toSurface);
+	}
+
+	for(const ManipContact& c: data.robotToManipBodyContacts())
+	{
+		contManip_.emplace_back(rbd::Jacobian(data.manipBody(), c.contact.bodyId), c.toSurface);
+	}
+
+	auto size = cont_.size() + contRobot_.size();
+
+	AEq_.resize(size*6 , nrDof_ + nrFor_ + nrTor_);
+	BEq_.resize(size*6);
+
+	AEq_.setZero();
+	BEq_.setZero();
+}
+
+
+void ContactManipSpeedConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc)
+{
+	using namespace Eigen;
+
+	rbd::paramToVector(mbc.alpha, alphaVecRobot_);
+	rbd::paramToVector(mbcManip_->alpha, alphaVecManip_);
+
+	for(std::size_t i = 0; i < contRobot_.size(); ++i)
+	{
+		// AEq = [-Robot{J_i}  Manip{J_i} ]
+		const MatrixXd& jacRobot = contRobot_[i].jac.jacobian(mb, mbc);
+		const MatrixXd& jacManip = contManip_[i].jac.jacobian(*mbManip_, *mbcManip_);
+		contRobot_[i].jac.translateJacobian(jacRobot, mbc, contRobot_[i].toSurface.translation(), contRobot_[i].jacTrans);
+		contManip_[i].jac.translateJacobian(jacManip, mbc, contManip_[i].toSurface.translation(), contManip_[i].jacTrans);
+
+		contRobot_[i].jac.fullJacobian(mb, contRobot_[i].jacTrans, fullJacRobot_);
+		contManip_[i].jac.fullJacobian(mb, contManip_[i].jacTrans, fullJacManip_);
+		//contRobot_[i].jac.fullJacobian(mb, jacRobot, fullJacRobot_); //Untranslated jacobians
+		//contManip_[i].jac.fullJacobian(*mbManip_, jacManip, fullJacManip_);
+		AEq_.block(i*6, 0, 6, mb.nrDof()) = -fullJacRobot_;
+		AEq_.block(i*6,mb.nrDof(),6,6) = fullJacManip_;
+
+		// BEq = JD_i*alpha - JD_manip_i * alpha + delta_speed/timeStep
+		const MatrixXd& jacDotRobot = contRobot_[i].jac.jacobianDot(mb, mbc);
+		const MatrixXd& jacDotManip = contManip_[i].jac.jacobianDot(*mbManip_, *mbcManip_);
+
+		contManip_[i].jac.translateJacobian(jacDotRobot, mbc, contRobot_[i].toSurface.translation(), contRobot_[i].jacTrans);
+		contManip_[i].jac.translateJacobian(jacDotManip, mbc, contManip_[i].toSurface.translation(), contManip_[i].jacTrans);
+
+		contRobot_[i].jac.fullJacobian(mb, contRobot_[i].jacTrans, fullJacRobot_);
+		contManip_[i].jac.fullJacobian(mb, contManip_[i].jacTrans, fullJacManip_);
+		//contRobot_[i].jac.fullJacobian(mb, jacDotRobot, fullJacRobot_); //Untranslated jacobian dot
+		//contManip_[i].jac.fullJacobian(mb, jacDotManip, fullJacManip_);
+
+		sva::PTransformd tf1 = sva::PTransformd(mbc.bodyPosW[contRobot_[i].body].rotation());
+		sva::PTransformd tf2 = sva::PTransformd(mbcManip_->bodyPosW[contManip_[i].body].rotation());
+
+		auto bodyVel = tf1.invMul(contRobot_[i].toSurface*mbc.bodyVelB[contRobot_[i].body]);
+		auto manipVel = tf2.invMul(contManip_[i].toSurface*mbcManip_->bodyVelB[contManip_[i].body]);
+
+		BEq_.segment(+i*6, 6) = fullJacRobot_*alphaVecRobot_ - fullJacManip_*alphaVecManip_
+						+ (bodyVel.vector() - manipVel.vector())/timeStep_;
+	}
+}
+
+
+int ContactManipSpeedConstr::maxEq()
+{
+	return int(AEq_.rows());
+}
+
+
+const Eigen::MatrixXd& ContactManipSpeedConstr::AEq() const
+{
+	return AEq_;
+}
+
+
+const Eigen::VectorXd& ContactManipSpeedConstr::BEq() const
+{
+	return BEq_;
+}
+
 } // Namespace qp
 } //Namespace Tasks

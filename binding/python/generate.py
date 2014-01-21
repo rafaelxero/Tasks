@@ -196,13 +196,15 @@ def build_qp(tasks):
 
   motionManipConstr = qp.add_class('MotionManipConstr', parent=[eqConstr, boundConstr, constr])
   contactManipAccConstr = qp.add_class('ContactManipAccConstr', parent=[eqConstr, constr, contactConstrCommon])
+  contactManipSpeedConstr = qp.add_class('ContactManipSpeedConstr', parent=[eqConstr, constr, contactConstrCommon])
 
   constrName = ['MotionConstr', 'ContactAccConstr', 'ContactSpeedConstr',
                 'SelfCollisionConstr', 'JointLimitsConstr', 'DamperJointLimitsConstr',
                 'StaticEnvCollisionConstr', 'TorqueLimitsConstr',
-                'GripperTorqueConstr', 'MotionManipConstr', 'ContactManipAccConstr']
+                'GripperTorqueConstr', 'MotionManipConstr', 'ContactManipAccConstr',
+                'ContactManipSpeedConstr']
   eqConstrName = ['MotionConstr', 'ContactAccConstr', 'ContactSpeedConstr',
-                  'MotionManipConstr', 'ContactManipAccConstr']
+                  'MotionManipConstr', 'ContactManipAccConstr', 'ContactManipSpeedConstr']
   ineqConstrName = ['SelfCollisionConstr', 'StaticEnvCollisionConstr',
                     'GripperTorqueConstr']
   boundConstrName = ['MotionConstr', 'JointLimitsConstr', 'DamperJointLimitsConstr',
@@ -215,7 +217,8 @@ def build_qp(tasks):
   constrList = [motionConstr, contactAccConstr, contactSpeedConstr,
                 selfCollisionConstr, seCollisionConstr,
                 jointLimitsConstr, damperJointLimitsConstr, torqueLimitsConstr,
-                gripperTorqueConstr, motionManipConstr, contactManipAccConstr]
+                gripperTorqueConstr, motionManipConstr, contactManipAccConstr,
+                contactManipSpeedConstr]
 
 
   # build list type
@@ -675,6 +678,9 @@ def build_qp(tasks):
  
   # ContactManipAccConstr
   contactManipAccConstr.add_constructor([param('const rbd::MultiBody&', 'mb')]) 
+
+  # ContactManipSpeedConstr
+  contactManipSpeedConstr.add_constructor([param('const rbd::MultiBody&', 'mb'), param('double', 'timeStep')])
 
   def add_add_remove_solver(constr):
     for c in constr:
