@@ -156,6 +156,7 @@ def build_qp(tasks):
   frictionCone = qp.add_struct('FrictionCone')
   unilateralContact = qp.add_struct('UnilateralContact')
   bilateralContact = qp.add_struct('BilateralContact')
+  manipContact = qp.add_struct('ManipContact')
 
   constr = qp.add_class('Constraint')
   eqConstr = qp.add_class('Equality')
@@ -228,6 +229,8 @@ def build_qp(tasks):
                       'tasks::qp::UnilateralContact', 'vector')
   tasks.add_container('std::vector<tasks::qp::BilateralContact>',
                       'tasks::qp::BilateralContact', 'vector')
+  tasks.add_container('std::vector<tasks::qp::ManipContact>',
+                      'tasks::qp::ManipContact', 'vector')
   tasks.add_container('std::vector<Eigen::Vector3d>', 'Eigen::Vector3d', 'vector')
   tasks.add_container('std::vector<Eigen::Matrix3d>', 'Eigen::Matrix3d', 'vector')
 
@@ -256,8 +259,8 @@ def build_qp(tasks):
                  [param('const rbd::MultiBody&', 'mb'),
                   param('std::vector<tasks::qp::UnilateralContact>&', 'cont'),
                   param('std::vector<tasks::qp::BilateralContact>&', 'cont'),
-                  param('std::vector<tasks::qp::UnilateralContact>&', 'cont'),
-                  param('std::vector<tasks::qp::UnilateralContact>&', 'cont')])
+                  param('std::vector<tasks::qp::ManipContact>&', 'cont'),
+                  param('std::vector<tasks::qp::ManipContact>&', 'cont')])
   sol.add_method('nrVars', retval('int'), [], is_const=True)
 
   add_std_solver_add_rm_nr('EqualityConstraint', eqConstrName)
@@ -337,6 +340,13 @@ def build_qp(tasks):
   bilateralContact.add_method('nrLambda', retval('int'), [],
                               is_const=True, throw=[dom_ex])
 
+  # ManipContact
+  manipContact.add_constructor([])
+  manipContact.add_constructor([param('tasks::qp::UnilateralContact','contact'),
+                                param('sva::PTransformd','tf')])
+
+  manipContact.add_instance_attribute('contact','tasks::qp::UnilateralContact')
+  manipContact.add_instance_attribute('toSurface','sva::PTransformd')
 
   # Constraint
   constr.add_method('updateNrVars', None,

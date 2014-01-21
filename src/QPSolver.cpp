@@ -154,8 +154,8 @@ void QPSolver::updateInEqConstrSize()
 void QPSolver::nrVars(const rbd::MultiBody& mb,
 	std::vector<UnilateralContact> uni,
 	std::vector<BilateralContact> bi,
-	std::vector<UnilateralContact> robToManip,
-	std::vector<UnilateralContact> manipToRob)
+	std::vector<ManipContact> robToManip,
+	std::vector<ManipContact> manipToRob)
 {
 	data_.alphaD_ = mb.nrDof();
 	data_.lambda_ = 0;
@@ -188,11 +188,11 @@ void QPSolver::nrVars(const rbd::MultiBody& mb,
 	}
 
 	// counting robot to manipulated body contacts
-	for(const UnilateralContact& c: data_.robotToManipBodyContacts())
+	for(const ManipContact& c: data_.robotToManipBodyContacts())
 	{
-		for(std::size_t i = 0; i < c.points.size(); ++i)
+		for(std::size_t i = 0; i < c.contact.points.size(); ++i)
 		{
-			data_.lambdaManip_ += c.nrLambda(int(i));
+			data_.lambdaManip_ += c.contact.nrLambda(int(i));
 		}
 	}
 	

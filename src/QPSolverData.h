@@ -128,24 +128,24 @@ public:
 		manipBodyConfig_ = bodyConfig;
 	}
 	
-	const std::vector<UnilateralContact>& robotToManipBodyContacts() const
+	const std::vector<ManipContact>& robotToManipBodyContacts() const
 	{
 		return robotToManipBodyContacts_;
 	}
 
 	void robotToManipBodyContacts(const
-			std::vector<UnilateralContact>& robToManiBodyCont)
+			std::vector<ManipContact>& robToManiBodyCont)
 	{
 		robotToManipBodyContacts_ = robToManiBodyCont; 
 	}
 
-	const std::vector<UnilateralContact>& manipBodyToRobotContacts() const
+	const std::vector<ManipContact>& manipBodyToRobotContacts() const
 	{
 		return manipBodyToRobotContacts_;
 	}
 
 	void manipBodyToRobotContacts(const
-			std::vector<UnilateralContact>& maniBodyToRobCont)
+			std::vector<ManipContact>& maniBodyToRobCont)
 	{
 		manipBodyToRobotContacts_ = maniBodyToRobCont; 
 	}
@@ -170,8 +170,8 @@ private:
 	int lambdaManip_;
 	rbd::MultiBody manipBody_;
 	rbd::MultiBodyConfig manipBodyConfig_;
-	std::vector<UnilateralContact> robotToManipBodyContacts_;
-	std::vector<UnilateralContact> manipBodyToRobotContacts_;
+	std::vector<ManipContact> robotToManipBodyContacts_;
+	std::vector<ManipContact> manipBodyToRobotContacts_;
 	
 };
 

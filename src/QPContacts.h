@@ -22,6 +22,8 @@
 // Eigen
 #include <Eigen/Core>
 
+//SpaceVecAlg
+#include <SpaceVecAlg/SpaceVecAlg>
 
 namespace tasks
 {
@@ -124,6 +126,18 @@ struct BilateralContact
 	std::vector<FrictionCone> cones;
 };
 
+struct ManipContact
+{
+	ManipContact(){}
+	ManipContact(UnilateralContact c, sva::PTransform<double> tf):
+		contact(c),
+		toSurface(tf)
+	{
+	}
+
+	UnilateralContact contact;
+	sva::PTransform<double> toSurface;
+};
 
 } // namespace qp
 

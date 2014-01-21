@@ -1059,10 +1059,11 @@ BOOST_AUTO_TEST_CASE(QPManip)
 	qp::QPSolver solver(true);
 
 	solver.manipBody(mb,mbc);
-	
-	std::vector<qp::UnilateralContact> robToManip =
-		{qp::UnilateralContact(0, points, Matrix3d::Identity(), 3, 0.7)};
-	std::vector<qp::UnilateralContact> manipToRob = robToManip;
+
+	qp::UnilateralContact contact = qp::UnilateralContact(0, points, Matrix3d::Identity(), 3, 0.7);
+	std::vector<qp::ManipContact> robToManip =
+		{qp::ManipContact(contact, sva::PTransformd::Identity())};
+	std::vector<qp::ManipContact> manipToRob = robToManip;
 		
 	solver.nrVars(mb,{},{},robToManip,robToManip);
 }
@@ -1114,15 +1115,16 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 		0,0,-1,
 		0,1,0;
 
-	std::vector<qp::UnilateralContact> robToManip =
-		{qp::UnilateralContact(mbManip.bodyIndexById(0), points, rot, 3, 0.7)};
+	qp::UnilateralContact contact(mbManip.bodyIndexById(0), points, rot, 3, 0.7);
+	std::vector<qp::ManipContact> robToManip =
+		{qp::ManipContact(contact, sva::PTransformd::Identity())};
 
 	rot  << 1,0,0,
 		0,0,1,
 		0,-1,0;
-
-	std::vector<qp::UnilateralContact> manipToRob =
-		{qp::UnilateralContact(mb.bodyIndexById(2), points, rot, 3, 0.7)};
+	contact = qp::UnilateralContact(mb.bodyIndexById(2), points, rot, 3, 0.7);
+	std::vector<qp::ManipContact> manipToRob =
+		{qp::ManipContact(contact, sva::PTransformd::Identity())};
 
 	qp::MotionManipConstr motionCstr(mb);
 	qp::ContactManipAccConstr contactCstr(mb);
@@ -1153,8 +1155,8 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 			writeFK(outfile, mbc);
 			writeFK(outfile2, solver.manipBodyConfig());
 			std::cout << solver.lambdaVec().transpose() << std::endl;
-			std::cout << robToManip[0].force(solver.lambdaVec()).transpose() << std::endl;
-			std::cout << manipToRob[0].force(solver.lambdaVec()).transpose() << std::endl;
+			std::cout << robToManip[0].contact.force(solver.lambdaVec()).transpose().norm() << std::endl;
+			std::cout << manipToRob[0].contact.force(solver.lambdaVec()).transpose().norm() << std::endl;
 			std::cout << std::endl;
 		}
 		else

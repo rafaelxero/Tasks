@@ -106,18 +106,18 @@ void MotionManipConstr::updateNrVars(const rbd::MultiBody& mb,
 	}
 
 	iCont = 0;
-	for(const UnilateralContact& c: manipCont)
+	for(const ManipContact& c: manipCont)
 	{
-		contManip_[iCont] = ContactData(*mbManip_, c.bodyId, c.points,
-			std::vector<FrictionCone>(c.points.size(), c.cone));
+		contManip_[iCont] = ContactData(*mbManip_, c.contact.bodyId, c.contact.points,
+			std::vector<FrictionCone>(c.contact.points.size(), c.contact.cone));
 		++iCont;
 	}
 
 	iCont = 0;
-	for(const UnilateralContact& c: robotCont)
+	for(const ManipContact& c: robotCont)
 	{
-		contRobot_[iCont] = ContactData(mb, c.bodyId, c.points,
-			std::vector<FrictionCone>(c.points.size(), c.cone));
+		contRobot_[iCont] = ContactData(mb, c.contact.bodyId, c.contact.points,
+			std::vector<FrictionCone>(c.contact.points.size(), c.contact.cone));
 		++iCont;
 	}
 
@@ -141,7 +141,7 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 
 	fd_.computeH(mb, mbc);
 	fd_.computeC(mb, mbc);
-	
+
 	fdManip_.computeH(*mbManip_, *mbcManip_);
 	fdManip_.computeC(*mbManip_, *mbcManip_);
 
@@ -152,7 +152,7 @@ void MotionManipConstr::update(const rbd::MultiBody& mb, const rbd::MultiBodyCon
 	// nrDof [   H      -Sum J_i^t*ni     [0 ... -1]
 	AEq_.block(0, 0, nrDof_-6, nrDof_-6) << fd_.H();
 	AEq_.block(nrDof_-6, nrDof_-6, 6, 6) << fdManip_.H();
-	
+
 	fullJac_.resize(6, mb.nrDof());
 	int contPos = nrDof_;
 	for(std::size_t i = 0; i < cont_.size(); ++i)
@@ -284,14 +284,14 @@ void ContactManipAccConstr::updateNrVars(const rbd::MultiBody& mb,
 		cont_.emplace_back(rbd::Jacobian(mb, bodyId));
 	}
 
-	for(const UnilateralContact& c: data.manipBodyToRobotContacts())
+	for(const ManipContact& c: data.manipBodyToRobotContacts())
 	{
-		contRobot_.emplace_back(rbd::Jacobian(mb, c.bodyId));
+		contRobot_.emplace_back(rbd::Jacobian(mb, c.contact.bodyId));
 	}
 
-	for(const UnilateralContact& c: data.robotToManipBodyContacts())
+	for(const ManipContact& c: data.robotToManipBodyContacts())
 	{
-		contManip_.emplace_back(rbd::Jacobian(data.manipBody(), c.bodyId));
+		contManip_.emplace_back(rbd::Jacobian(data.manipBody(), c.contact.bodyId));
 	}
 
 	auto size = cont_.size() + contRobot_.size();
@@ -312,7 +312,7 @@ void ContactManipAccConstr::update(const rbd::MultiBody& mb, const rbd::MultiBod
 	rbd::paramToVector(mbcManip_->alpha, alphaVecManip_);
 	int offset = 0;
 	// Robot{J_i*alphaD + JD_i*alpha} =  Manip{J_i*alphaD + JD_i*alpha}
-
+        /*
 	for(std::size_t i = 0; i < cont_.size(); ++i)
 	{
 		// AEq = [-Robot{J_i}  Manip{J_i} ]
@@ -326,7 +326,7 @@ void ContactManipAccConstr::update(const rbd::MultiBody& mb, const rbd::MultiBod
 		BEq_.segment(i*6, 6) = fullJacRobot_*alphaVecRobot_;
 		++offset;
 	}
-
+	*/
 	for(std::size_t i = 0; i < contRobot_.size(); ++i)
 	{
 		// AEq = [-Robot{J_i}  Manip{J_i} ]
