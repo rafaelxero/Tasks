@@ -568,8 +568,7 @@ int MomentumTask::dim()
 
 void MomentumTask::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc)
 {
-	momt_.update(mb, mbc);
-	momt_.updateDot(mb, mbc);
+	momt_.updateAll(mb, mbc);
 }
 
 
