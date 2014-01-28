@@ -22,7 +22,10 @@
 // RBDyn
 #include <RBDyn/CoM.h>
 #include <RBDyn/Jacobian.h>
+#include <RBDyn/MultiBodyConfig.h>
+#include <RBDyn/Joint.h>
 
+#include "QPContacts.h"
 // forward declarations
 // RBDyn
 namespace rbd
@@ -147,7 +150,38 @@ private:
 	Eigen::MatrixXd jacDotMat_;
 };
 
+class ManipCoMTask
+{
+public:
+	ManipCoMTask(const rbd::MultiBody& mb, const Eigen::Vector3d& com,
+			const rbd::MultiBody& mbManip, int bodyIdContact,
+			const sva::PTransformd& toSurface);
 
+	void com(const Eigen::Vector3d& com);
+	const Eigen::Vector3d com() const;
+
+	void update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc);
+	void updateDot(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc);
+
+	const Eigen::VectorXd& eval() const;
+	const Eigen::MatrixXd& jac() const;
+	const Eigen::MatrixXd& jacDot() const;
+
+	const rbd::MultiBody& mbTask() const;
+	const rbd::MultiBodyConfig& mbcTask() const;
+
+private:
+	void fillMbcManip(const rbd::MultiBodyConfig& mbc);
+	Eigen::Vector3d com_;
+	rbd::CoMJacobianDummy jac_;
+
+	Eigen::VectorXd eval_;
+	Eigen::MatrixXd jacMat_;
+	Eigen::MatrixXd jacDotMat_;
+
+	rbd::MultiBody mbManip_;
+	rbd::MultiBodyConfig mbcManip_;
+};
 
 class LinVelocityTask
 {
