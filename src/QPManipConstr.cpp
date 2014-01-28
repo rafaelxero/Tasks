@@ -458,7 +458,7 @@ void ContactManipSpeedConstr::update(const rbd::MultiBody& mb, const rbd::MultiB
 		auto bodyVel = tf1.invMul(contRobot_[i].toSurface*mbc.bodyVelB[contRobot_[i].body]);
 		auto manipVel = tf2.invMul(contManip_[i].toSurface*mbcManip_->bodyVelB[contManip_[i].body]);
 
-		BEq_.segment(+i*6, 6) = fullJacRobot_*alphaVecRobot_ - fullJacManip_*alphaVecManip_
+		BEq_.segment(i*6, 6) = fullJacRobot_*alphaVecRobot_ - fullJacManip_*alphaVecManip_
 						+ (bodyVel.vector() - manipVel.vector())/timeStep_;
 	}
 }
