@@ -20,7 +20,7 @@
 #include <tuple>
 
 // boost
-#define BOOST_TEST_DYN_LINK
+//#define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE QPSolverTest
 #include <boost/test/unit_test.hpp>
 #include <boost/math/constants/constants.hpp>
@@ -1167,4 +1167,69 @@ BOOST_AUTO_TEST_CASE(QPManipConstr)
 	}
 	outfile << "]" << std::endl;
 	outfile2 << "]" << std::endl;
+}
+
+BOOST_AUTO_TEST_CASE(ManipCoMTask)
+{
+	using namespace Eigen;
+	using namespace sva;
+	using namespace rbd;
+	using namespace tasks;
+	namespace cst = boost::math::constants;
+
+	MultiBody mb;
+	MultiBodyConfig mbc;
+	MultiBody mbManip;
+	MultiBodyConfig mbcManip;
+	Body manipBody;
+
+	std::tie(mb, mbc) = makeZXZArm(true);
+	mbc.q[1][0] = 1./4*cst::pi<double>();
+
+	forwardKinematics(mb, mbc);
+	forwardVelocity(mb, mbc);
+	sva::PTransformd toLastJoint = mbc.bodyPosW[3];
+
+	manipBody = Body(10000, Eigen::Vector3d::Zero(), 0.1*Eigen::Matrix3d::Identity(), 0, "manip");
+	mbManip = MultiBody({manipBody}, {Joint(Joint::Free, true, -1, "Root")}, {-1}, {0}, {-1}, {sva::PTransformd::Identity()});
+	mbcManip = MultiBodyConfig(mbManip);
+	mbcManip.zero(mbManip);
+
+	Eigen::Quaterniond oriManip(toLastJoint.rotation());
+	Eigen::Vector3d transManip(toLastJoint.translation());
+	mbcManip.q[0] = {oriManip.w(), oriManip.x(), oriManip.y(), oriManip.z(), transManip.x(), transManip.y(), transManip.z()};
+	forwardKinematics(mbManip, mbcManip);
+	forwardVelocity(mbManip, mbcManip);
+
+	qp::QPSolver solver(true);
+	solver.nrVars(mb, {}, {}, {}, {});
+	solver.updateEqConstrSize();
+	solver.updateInEqConstrSize();
+
+	solver.manipBody(mbManip,mbcManip);
+
+	Matrix3d rot;
+	rot  << 1,0,0,
+		0,0,1,
+		0,-1,0;
+
+	std::vector<Eigen::Vector3d> points =
+	{
+		Vector3d(0.1, 0.1, 0.),
+		 Vector3d(-0.1, 0.1, 0.),
+		Vector3d(-0.1, -0.1, 0.),
+		Vector3d(0.1, -0.1, 0.)
+	};
+	qp::UnilateralContact contact(mb.bodyIndexById(3), points, rot, 3, 0.7);
+
+	qp::ManipContact manipToRob(contact, sva::PTransformd::Identity());
+
+	Vector3d comTarget(0,0,0);
+	qp::ManipCoMTask comTask(mb, comTarget, mbManip, manipToRob.contact.bodyId, manipToRob.toSurface);
+	qp::SetPointTask comTaskSp(mb, &comTask, 10., 1.);
+	solver.addTask(&comTaskSp);
+	solver.update(mb, mbc, 0.001);
+	std::cout << rbd::computeCoM(mb, mbc).transpose() << std::endl;
+	std::cout << toLastJoint.translation().transpose() << std::endl;
+	std::cout << -comTask.eval().transpose() << std::endl;
 }
