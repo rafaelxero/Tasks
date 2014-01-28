@@ -386,6 +386,48 @@ private:
 	tasks::CoMTask ct_;
 };
 
+class ManipCoMTask : public HighLevelTask
+{
+public:
+	ManipCoMTask(const rbd::MultiBody& mb, const Eigen::Vector3d& com,
+			const rbd::MultiBody& mbManip, int bodyIdContact,
+			const sva::PTransformd& toSurface);
+
+	tasks::ManipCoMTask& task()
+	{
+		return mct_;
+	}
+
+	void com(const Eigen::Vector3d& com)
+	{
+		mct_.com(com);
+	}
+
+	const Eigen::Vector3d com() const
+	{
+		return mct_.com();
+	}
+
+	const rbd::MultiBody& mbTask() const
+	{
+		return mct_.mbTask();
+	}
+
+	const rbd::MultiBodyConfig& mbcTask() const
+	{
+		return mct_.mbcTask();
+	}
+
+	virtual int dim();
+	virtual void update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc);
+
+	virtual const Eigen::MatrixXd& jac();
+	virtual const Eigen::MatrixXd& jacDot();
+	virtual const Eigen::VectorXd& eval();
+
+private:
+	tasks::ManipCoMTask mct_;
+};
 
 
 class ContactTask : public Task

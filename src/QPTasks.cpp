@@ -508,6 +508,47 @@ const Eigen::VectorXd& CoMTask::eval()
 	return ct_.eval();
 }
 
+/**
+	*													ManipCoMTask
+	*/
+
+
+ManipCoMTask::ManipCoMTask(const rbd::MultiBody& mb, const Eigen::Vector3d& com,
+		const rbd::MultiBody& mbManip, int bodyIdContact,
+		const sva::PTransformd& toSurface):
+	mct_(mb, com, mbManip, bodyIdContact, toSurface)
+{}
+
+
+int ManipCoMTask::dim()
+{
+  return 3;
+}
+
+
+void ManipCoMTask::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc)
+{
+	mct_.update(mb, mbc);
+	mct_.updateDot(mb, mbc);
+}
+
+
+const Eigen::MatrixXd& ManipCoMTask::jac()
+{
+	return mct_.jac();
+}
+
+
+const Eigen::MatrixXd& ManipCoMTask::jacDot()
+{
+	return mct_.jacDot();
+}
+
+
+const Eigen::VectorXd& ManipCoMTask::eval()
+{
+	return mct_.eval();
+}
 
 /**
 	*														ContactTask
