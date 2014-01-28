@@ -24,6 +24,7 @@
 #include <RBDyn/Jacobian.h>
 #include <RBDyn/MultiBodyConfig.h>
 #include <RBDyn/Joint.h>
+#include <RBDyn/Momentum.h>
 
 #include "QPContacts.h"
 // forward declarations
@@ -181,6 +182,30 @@ private:
 
 	rbd::MultiBody mbManip_;
 	rbd::MultiBodyConfig mbcManip_;
+};
+
+class MomentumTask
+{
+public:
+	MomentumTask(const rbd::MultiBody& mb, const sva::ForceVecd mom);
+
+	void momentum(const sva::ForceVecd& mom);
+	const sva::ForceVec<double> momentum() const;
+
+	void update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc);
+	void updateDot(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc);
+
+	const Eigen::VectorXd& eval() const;
+	const Eigen::MatrixXd& jac() const;
+	const Eigen::MatrixXd& jacDot() const;
+
+private:
+
+	sva::ForceVec<double> momentum_;
+	rbd::CentroidalMomentumMatrix momentumMatrix_;
+	Eigen::VectorXd eval_;
+	Eigen::MatrixXd jacMat_;
+	Eigen::MatrixXd jacDotMat_;
 };
 
 class LinVelocityTask
