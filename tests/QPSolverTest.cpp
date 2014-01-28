@@ -1233,3 +1233,39 @@ BOOST_AUTO_TEST_CASE(ManipCoMTask)
 	std::cout << toLastJoint.translation().transpose() << std::endl;
 	std::cout << -comTask.eval().transpose() << std::endl;
 }
+
+BOOST_AUTO_TEST_CASE(MomentumTask)
+{
+	using namespace Eigen;
+	using namespace sva;
+	using namespace rbd;
+	using namespace tasks;
+	namespace cst = boost::math::constants;
+
+	MultiBody mb;
+	MultiBodyConfig mbc;
+
+	std::tie(mb, mbc) = makeZXZArm();
+
+	forwardKinematics(mb, mbc);
+	forwardVelocity(mb, mbc);
+
+	qp::QPSolver solver(true);
+
+	solver.nrVars(mb, {}, {}, {}, {});
+
+	solver.updateEqConstrSize();
+	solver.updateInEqConstrSize();
+
+	sva::ForceVecd momTarget(Vector3d(1., 1., 1.), Vector3d(0., 0., 0.));
+
+	qp::MomentumTask momTask(mb, momTarget);
+	qp::SetPointTask momTaskSp(mb, &momTask, 10., 1.);
+
+	// Test addTask
+	solver.addTask(&momTaskSp);
+	BOOST_CHECK_EQUAL(solver.nrTasks(), 1);
+
+	// Test MomentumTask
+	BOOST_REQUIRE(solver.update(mb, mbc, 0));
+}
