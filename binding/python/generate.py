@@ -55,7 +55,7 @@ def import_eigen3_types(mod):
 
 
 
-def build_tasks(posTask, oriTask, positionTask, comTask, manipCoMTask, linVelTask, oriTrackTask):
+def build_tasks(posTask, oriTask, positionTask, comTask, manipCoMTask, momTask, linVelTask, oriTrackTask):
   def add_std_func(cls):
     cls.add_method('update', None,
                    [param('const rbd::MultiBody&', 'mb'),
@@ -134,6 +134,15 @@ def build_tasks(posTask, oriTask, positionTask, comTask, manipCoMTask, linVelTas
 
   add_std_func(comTask)
 
+  # MomentumTask
+  momTask.add_constructor([param('const rbd::MultiBody&', 'mb'),
+                           param('const sva::ForceVecd&', 'mom')])
+
+  momTask.add_method('momentum', None, [param('const sva::ForceVecd&', 'mom')])
+  momTask.add_method('momentum', retval('const sva::ForceVecd&', 'momentum'), [],
+                     is_const=True)
+  add_std_func(momTask)
+
   # LinVelocityTask
   linVelTask.add_constructor([param('const rbd::MultiBody&', 'mb'),
                            param('int', 'bodyId'),
@@ -194,6 +203,7 @@ def build_qp(tasks):
   postureTask = qp.add_class('PostureTask', parent=task)
   comTask = qp.add_class('CoMTask', parent=hlTask)
   manipCoMTask = qp.add_class('ManipCoMTask', parent=hlTask)
+  momTask = qp.add_class('MomentumTask', parent=hlTask)
   contactTask = qp.add_class('ContactTask', parent=task)
   gripperTorqueTask = qp.add_class('GripperTorqueTask', parent=task)
   linVelTask = qp.add_class('LinVelocityTask', parent=hlTask)
@@ -233,7 +243,7 @@ def build_qp(tasks):
               'tasks::qp::PostureTask', 'tasks::qp::ContactTask',
               'tasks::qp::GripperTorqueTask']
   hlTaskName = ['PositionTask', 'OrientationTask', 'CoMTask', 'ManipCoMTask',
-                'LinVelocityTask', 'OrientationTrackingTask']
+                'LinVelocityTask', 'OrientationTrackingTask', 'MomentumTask']
   constrList = [motionConstr, contactAccConstr, contactSpeedConstr,
                 selfCollisionConstr, seCollisionConstr,
                 jointLimitsConstr, damperJointLimitsConstr, torqueLimitsConstr,
@@ -581,6 +591,13 @@ def build_qp(tasks):
   comTask.add_method('com', None, [param('const Eigen::Vector3d&', 'com')])
   comTask.add_method('com', retval('const Eigen::Vector3d&', 'com'), [],
                      is_const=True)
+  # MomentumTask
+  momTask.add_constructor([param('const rbd::MultiBody&', 'mb'),
+                           param('const sva::ForceVecd&', 'mom')])
+
+  momTask.add_method('momentum', None, [param('const sva::ForceVecd&', 'mom')])
+  momTask.add_method('momentum', retval('const sva::ForceVecd&', 'momentum'), [],
+                     is_const=True)
 
   # ManipCoMTask
   manipCoMTask.add_constructor([param('const rbd::MultiBody&', 'mb'),
@@ -769,6 +786,7 @@ if __name__ == '__main__':
   postureTask = tasks.add_class('PostureTask')
   comTask = tasks.add_class('CoMTask')
   manipCoMTask = tasks.add_class('ManipCoMTask')
+  momTask = tasks.add_class('MomentumTask')
   linVelTask = tasks.add_class('LinVelocityTask')
   oriTrackTask = tasks.add_class('OrientationTrackingTask')
 
@@ -777,7 +795,7 @@ if __name__ == '__main__':
   tasks.add_container('std::vector<double>', 'double', 'vector')
   tasks.add_container('std::vector<std::vector<double> >', 'std::vector<double>', 'vector')
 
-  build_tasks(posTask, oriTask, postureTask, comTask, manipCoMTask, linVelTask, oriTrackTask)
+  build_tasks(posTask, oriTask, postureTask, comTask, manipCoMTask, momTask, linVelTask, oriTrackTask)
 
   # qp
   build_qp(tasks)
