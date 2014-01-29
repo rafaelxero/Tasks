@@ -16,7 +16,7 @@
 
 // associated header
 #include "Tasks.h"
-
+#include "ManipBody.h"
 // includes
 // std
 #include <set>
@@ -345,36 +345,13 @@ ManipCoMTask::ManipCoMTask(const rbd::MultiBody& mb, const Eigen::Vector3d& com,
   mbManip_(),
   mbcManip_()
 {
-	std::vector<rbd::Body> bodies(mb.bodies());
-	std::vector<rbd::Joint> joints(mb.joints());
-	std::vector<int> pred(mb.predecessors());
-	std::vector<int> succ(mb.successors());
-	std::vector<int> parent(mb.parents());
-	std::vector<sva::PTransformd> Xt(mb.transforms());
-	rbd::Body newBody; //Create copy of mbManip with new index
-	rbd::Joint newJoint; //Create new fixed joint
 
-	int bodyIndex = bodies.size();
-	int jointIndex = joints.size();
-
-	newBody = rbd::Body(mbManip.body(0).inertia(), 15000, "ManipBody");
-	newJoint = rbd::Joint(rbd::Joint::Fixed, true, 42000, "ManipJoint");
-
-	bodies.push_back(newBody);
-	joints.push_back(newJoint);
-
-	pred.push_back(mb.bodyIndexById(bodyIdContact));
-	succ.push_back(bodyIndex);
-	parent.push_back(mb.bodyIndexById(bodyIdContact));
-
-	Xt.push_back(toSurface);
-
-	mbManip_ = rbd::MultiBody(bodies, joints, pred, succ, parent, Xt);
+	mbManip_ = fuseMultiBody(mb, mbManip, bodyIdContact, toSurface);
 	mbcManip_ = rbd::MultiBodyConfig(mbManip_);
 	mbcManip_.zero(mbManip_);
 
 	std::vector<double> weights(mbManip_.nrBodies(), 1.);
-	weights[bodyIndex] = 0.001;
+	weights[mbManip_.nrBodies()-1] = 0.01;
 
 	jac_ = rbd::CoMJacobianDummy(mbManip_, weights);
 }
@@ -394,7 +371,9 @@ const Eigen::Vector3d ManipCoMTask::com() const
 
 void ManipCoMTask::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc)
 {
-	fillMbcManip(mbc);
+	fillMbcManip(mbc, mbcManip_);
+	rbd::forwardKinematics(mbManip_, mbcManip_);
+	rbd::forwardVelocity(mbManip_, mbcManip_);
 	eval_ = com_ - rbd::computeCoM(mbManip_, mbcManip_);
 
 	jacMat_ = jac_.jacobian(mbManip_, mbcManip_).block(3, 0, 3, mb.nrDof());
@@ -403,20 +382,10 @@ void ManipCoMTask::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& 
 
 void ManipCoMTask::updateDot(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc)
 {
-	fillMbcManip(mbc);
-	jacDotMat_ = jac_.jacobianDot(mbManip_, mbcManip_).block(3, 0, 3, mb.nrDof());
-}
-
-void ManipCoMTask::fillMbcManip(const rbd::MultiBodyConfig& mbc)
-{
-	int i = 0;
-	for(auto vec: mbc.q)
-	{
-		mbcManip_.q[i] = vec;
-		++i;
-	}
+	fillMbcManip(mbc, mbcManip_);
 	rbd::forwardKinematics(mbManip_, mbcManip_);
 	rbd::forwardVelocity(mbManip_, mbcManip_);
+	jacDotMat_ = jac_.jacobianDot(mbManip_, mbcManip_).block(3, 0, 3, mb.nrDof());
 }
 
 const Eigen::VectorXd& ManipCoMTask::eval() const

@@ -172,7 +172,6 @@ public:
 	const rbd::MultiBodyConfig& mbcTask() const;
 
 private:
-	void fillMbcManip(const rbd::MultiBodyConfig& mbc);
 	Eigen::Vector3d com_;
 	rbd::CoMJacobianDummy jac_;
 
