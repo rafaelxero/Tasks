@@ -478,7 +478,17 @@ const Eigen::MatrixXd& MomentumTask::jacDot() const
 	return jacDotMat_;
 }
 
-/**
+const rbd::MultiBody& ManipMomTask::mbTask() const
+{
+	return mbManip_;
+}
+
+const rbd::MultiBodyConfig& ManipMomTask::mbcTask() const
+{
+	return mbcManip_;
+}
+
+	/**
 	*													ManipMomentumTask
 	*/
 
@@ -498,7 +508,7 @@ ManipMomTask::ManipMomTask(const rbd::MultiBody& mb, const sva::ForceVecd& mom,
 	mbcManip_.zero(mbManip_);
 
 	std::vector<double> weights(mbManip_.nrBodies(), 1.);
-	weights[mbManip_.nrBodies()-1] = 0.01;
+	//weights[mbManip_.nrBodies()-1] = 0.01;
 
 	momentumMatrix_ = rbd::CentroidalMomentumMatrix(mbManip_, weights);
 }
