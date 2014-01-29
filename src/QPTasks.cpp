@@ -603,6 +603,47 @@ const Eigen::VectorXd& MomentumTask::eval()
 }
 
 /**
+	*													ManipMomentumTask
+	*/
+
+
+ManipMomTask::ManipMomTask(const rbd::MultiBody& mb, const sva::ForceVecd& mom,
+			const rbd::MultiBody& mbManip, int bodyIdContact,
+			const sva::PTransformd& toSurface):
+	momt_(mb, mom, mbManip, bodyIdContact, toSurface)
+{}
+
+
+int ManipMomTask::dim()
+{
+  return 6;
+}
+
+
+void ManipMomTask::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc)
+{
+	momt_.updateAll(mb, mbc);
+}
+
+
+const Eigen::MatrixXd& ManipMomTask::jac()
+{
+	return momt_.jac();
+}
+
+
+const Eigen::MatrixXd& ManipMomTask::jacDot()
+{
+	return momt_.jacDot();
+}
+
+
+const Eigen::VectorXd& ManipMomTask::eval()
+{
+	return momt_.eval();
+}
+
+/**
 	*														ContactTask
 	*/
 
