@@ -208,6 +208,39 @@ private:
 	Eigen::MatrixXd jacDotMat_;
 };
 
+class ManipMomTask
+{
+public:
+	ManipMomTask(const rbd::MultiBody& mb, const sva::ForceVecd& mom,
+			const rbd::MultiBody& mbManip, int bodyIdContact,
+			const sva::PTransformd& toSurface);
+
+	void momentum(const sva::ForceVecd& mom);
+	const sva::ForceVecd momentum() const;
+
+	void update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc);
+	void updateDot(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc);
+	void updateAll(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc);
+
+	const Eigen::VectorXd& eval() const;
+	const Eigen::MatrixXd& jac() const;
+	const Eigen::MatrixXd& jacDot() const;
+
+	const rbd::MultiBody& mbTask() const;
+	const rbd::MultiBodyConfig& mbcTask() const;
+
+private:
+	sva::ForceVecd momentum_;
+	rbd::CentroidalMomentumMatrix momentumMatrix_;
+
+	Eigen::VectorXd eval_;
+	Eigen::MatrixXd jacMat_;
+	Eigen::MatrixXd jacDotMat_;
+
+	rbd::MultiBody mbManip_;
+	rbd::MultiBodyConfig mbcManip_;
+};
+
 class LinVelocityTask
 {
 public:

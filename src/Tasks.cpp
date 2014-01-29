@@ -479,6 +479,97 @@ const Eigen::MatrixXd& MomentumTask::jacDot() const
 }
 
 /**
+	*													ManipMomentumTask
+	*/
+
+ManipMomTask::ManipMomTask(const rbd::MultiBody& mb, const sva::ForceVecd& mom,
+		const rbd::MultiBody& mbManip, int bodyIdContact,
+		const sva::PTransformd& toSurface):
+  momentum_(mom),
+  eval_(3),
+  jacMat_(3, mb.nrDof()),
+  jacDotMat_(3, mb.nrDof()),
+  mbManip_(),
+  mbcManip_()
+{
+
+	mbManip_ = fuseMultiBody(mb, mbManip, bodyIdContact, toSurface);
+	mbcManip_ = rbd::MultiBodyConfig(mbManip_);
+	mbcManip_.zero(mbManip_);
+
+	std::vector<double> weights(mbManip_.nrBodies(), 1.);
+	weights[mbManip_.nrBodies()-1] = 0.01;
+
+	momentumMatrix_ = rbd::CentroidalMomentumMatrix(mbManip_, weights);
+}
+
+void ManipMomTask::momentum(const sva::ForceVecd& mom)
+{
+	momentum_ = mom;
+}
+
+const sva::ForceVec<double> ManipMomTask::momentum() const
+{
+	return momentum_;
+}
+
+void ManipMomTask::update(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc)
+{
+	fillMbcManip(mbc, mbcManip_);
+	rbd::forwardKinematics(mbManip_, mbcManip_);
+	rbd::forwardVelocity(mbManip_, mbcManip_);
+	Eigen::Vector3d com = rbd::computeCoM(mbManip_, mbcManip_);
+
+	eval_ = momentum_.vector() -
+		rbd::computeCentroidalMomentum(mbManip_, mbcManip_, com).vector();
+
+	momentumMatrix_.computeMatrix(mbManip_, mbcManip_, com);
+
+	jacMat_ = momentumMatrix_.matrix().block(0, 0, 6, mb.nrDof());
+}
+
+void ManipMomTask::updateDot(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc)
+{
+	fillMbcManip(mbc, mbcManip_);
+	rbd::forwardKinematics(mbManip_, mbcManip_);
+	rbd::forwardVelocity(mbManip_, mbcManip_);
+	momentumMatrix_.computeMatrixDot(mbManip_, mbcManip_,
+			rbd::computeCoM(mbManip_, mbcManip_),
+			rbd::computeCoMVelocity(mbManip_, mbcManip_));
+	jacDotMat_ = momentumMatrix_.matrixDot().block(0, 0, 6, mb.nrDof());
+}
+
+void ManipMomTask::updateAll(const rbd::MultiBody& mb, const rbd::MultiBodyConfig& mbc)
+{
+	fillMbcManip(mbc, mbcManip_);
+	rbd::forwardKinematics(mbManip_, mbcManip_);
+	rbd::forwardVelocity(mbManip_, mbcManip_);
+	Eigen::Vector3d com = rbd::computeCoM(mbManip_, mbcManip_);
+
+	eval_ = momentum_.vector() -
+		rbd::computeCentroidalMomentum(mbManip_, mbcManip_, com).vector();
+
+	momentumMatrix_.computeMatrixAndMatrixDot(mbManip_, mbcManip_, com,
+			rbd::computeCoMVelocity(mbManip_, mbcManip_));
+	jacMat_ = momentumMatrix_.matrix().block(0, 0, 6, mb.nrDof());
+	jacDotMat_ = momentumMatrix_.matrixDot().block(0, 0, 6, mb.nrDof());
+}
+
+const Eigen::VectorXd& ManipMomTask::eval() const
+{
+	return eval_;
+}
+
+const Eigen::MatrixXd& ManipMomTask::jac() const
+{
+	return jacMat_;
+}
+
+const Eigen::MatrixXd& ManipMomTask::jacDot() const
+{
+	return jacDotMat_;
+}
+/**
 	*													LinVelocityTask
 	*/
 
