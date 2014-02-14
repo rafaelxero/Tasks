@@ -291,6 +291,14 @@ CoMTask::CoMTask(const rbd::MultiBody& mb, const Eigen::Vector3d& com):
   jacDotMat_(3, mb.nrDof())
 {}
 
+CoMTask::CoMTask(const rbd::MultiBody& mb, const Eigen::Vector3d& com,
+		const std::vector<double>& weights):
+  com_(com),
+  jac_(mb, weights),
+  eval_(3),
+  jacMat_(3, mb.nrDof()),
+  jacDotMat_(3, mb.nrDof())
+{}
 
 void CoMTask::com(const Eigen::Vector3d& com)
 {

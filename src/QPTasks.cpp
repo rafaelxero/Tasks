@@ -490,6 +490,10 @@ CoMTask::CoMTask(const rbd::MultiBody& mb, const Eigen::Vector3d& com):
 	ct_(mb, com)
 {}
 
+CoMTask::CoMTask(const rbd::MultiBody& mb, const Eigen::Vector3d& com,
+		const std::vector<double>& weights):
+	ct_(mb, com, weights)
+{}
 
 int CoMTask::dim()
 {
