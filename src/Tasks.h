@@ -146,7 +146,7 @@ public:
 
 private:
 	Eigen::Vector3d com_;
-	rbd::CoMJacobianDummy jac_;
+	rbd::CoMJacobian jac_;
 
 	Eigen::VectorXd eval_;
 	Eigen::MatrixXd jacMat_;
