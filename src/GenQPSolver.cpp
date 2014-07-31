@@ -20,6 +20,9 @@
 // std
 #include <map>
 
+// boost
+#include <boost/timer/timer.hpp>
+
 // tasks
 #include "QPSolver.h"
 
@@ -388,9 +391,14 @@ void LSSOLQPSolver::updateMatrix(
 
 bool LSSOLQPSolver::solve()
 {
+	boost::timer::cpu_timer timer;
 	bool success = lssol_.solve(Q_, C_,
 		A_.block(0, 0, nrALines_, int(A_.cols())), int(A_.rows()),
 		AL_.segment(0, nrALines_), AU_.segment(0, nrALines_), XL_, XU_);
+	timer.stop();
+	std::cerr << timer.elapsed().wall << " " << timer.elapsed().user << " "
+						<< timer.elapsed().system << " " << nrALines_ << " "
+						<< int(Q_.cols()) << std::endl;
 	return success;
 }
 
@@ -524,10 +532,15 @@ void QLDQPSolver::updateMatrix(
 
 bool QLDQPSolver::solve()
 {
+	boost::timer::cpu_timer timer;
 	bool success = qld_.solve(Q_, C_,
 		Aeq_.block(0, 0, nrAeqLines_, int(Aeq_.cols())), beq_.segment(0, nrAeqLines_),
 		Aineq_.block(0, 0, nrAineqLines_, int(Aineq_.cols())), bineq_.segment(0, nrAineqLines_),
 		XL_, XU_, 1e-6);
+	timer.stop();
+	std::cerr << timer.elapsed().wall << " " << timer.elapsed().user << " "
+						<< timer.elapsed().system << " " << nrAeqLines_ << " "
+						<< nrAineqLines_ << " " << int(Q_.cols()) << std::endl;
 	return success;
 }
 

@@ -1,3 +1,7 @@
+set(BOOST_COMPONENTS timer system)
+SEARCH_FOR_BOOST()
+
+
 set(SOURCES Tasks.cpp QPSolver.cpp QPTasks.cpp QPConstr.cpp
             QPContacts.cpp QPSolverData.cpp QPMotionConstr.cpp
             GenQPSolver.cpp)
@@ -13,7 +17,7 @@ endif()
 
 
 add_library(Tasks SHARED ${SOURCES} ${HEADERS} ${PRIVATE_HEADERS})
-
+target_link_libraries(Tasks ${Boost_LIBRARIES})
 
 PKG_CONFIG_USE_DEPENDENCY(Tasks sch-core)
 PKG_CONFIG_USE_DEPENDENCY(Tasks SpaceVecAlg)
