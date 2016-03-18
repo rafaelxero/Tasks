@@ -1,0 +1,20 @@
+Index: tasks/tests/QPMultiRobotTest.cpp
+===================================================================
+--- tasks.orig/tests/QPMultiRobotTest.cpp	2016-03-16 18:53:19.546122064 +0900
++++ tasks/tests/QPMultiRobotTest.cpp	2016-03-16 18:53:43.002055966 +0900
+@@ -88,7 +88,15 @@
+ 			{Vector3d::Zero()}, RotX(cst::pi<double>()/2.), X_b1_b2,
+ 			3, std::tan(cst::pi<double>()/4.))};
+ 
++#ifndef LSSOL_SOLVER_FOUND
++	#ifdef __i386__
++		Matrix3d oriD = RotZ(0.0);
++	#else
++		Matrix3d oriD = RotZ(cst::pi<double>()/4.);
++	#endif
++#else
+ 	Matrix3d oriD = RotZ(cst::pi<double>()/4.);
++#endif
+ 	Vector3d posD(oriD*mbc2Init.bodyPosW.back().translation());
+ 	qp::PositionTask posTask(mbs, 1, 3, posD);
+ 	qp::SetPointTask posTaskSp(mbs, 1, &posTask, 1000., 1.);

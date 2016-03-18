@@ -1,0 +1,114 @@
+Source: tasks
+Priority: optional
+Maintainer: Pierre Gergondet <pierre.gergondet+ppa@gmail.com>
+Standards-Version: 3.9.5
+Section: libs
+Homepage: http://github.com/jrl-umi3218/tasks
+Vcs-Git: git://github.com/jrl-umi3218/tasks -b debian
+Vcs-Browser: http://github.com/jrl-umi3218/tasks
+Build-Depends: debhelper (>= 9),
+               pkg-config,
+               cmake,
+               doxygen,
+               libboost-system-dev,
+               libboost-test-dev,
+               libboost-timer-dev,
+               libeigen3-dev (>= 3.2),
+               libspacevecalg-dev,
+               librbdyn-dev,
+               libsch-core-dev,
+# Uncomment the following line to build with LSSOL support
+#               libeigen-lssol-dev,
+               libeigen-qld-dev
+
+Package: libtasks-qld-dev
+Provides: libtasks-dev
+Section: libdevel
+Architecture: any
+Depends: pkg-config,
+         libeigen3-dev (>= 3.2),
+         libspacevecalg-dev,
+         librbdyn-dev,
+         libsch-core-dev,
+         libeigen-qld-dev,
+         libtasks-qld0 (= ${binary:Version}),
+         ${misc:Depends}
+Suggests: libtasks-qld-doc
+Description: tasks - development files
+ The Tasks library is designed to make real-time control for
+ kinematics tree and list of kinematics tree.
+ .
+ This package contains development files (headers and shared library
+ symbolic link).
+
+
+Package: libtasks-qld0
+Provides: libtasks0
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Description: tasks: real-time control
+ The Tasks library is designed to make real-time control for
+ kinematics tree and list of kinematics tree.
+
+Package: libtasks-qld-doc
+Provides: libtasks-doc
+Section: doc
+Architecture: all
+Depends: ${misc:Depends}
+Multi-Arch: foreign
+Suggests: libtasks-dev
+Description: tasks API documentation
+ The Tasks library is designed to make real-time control for
+ kinematics tree and list of kinematics tree.
+ .
+ This package provides the complete API documentation in HTML format.
+
+# Uncomment the following lines to build LSSOL packages (non-free)
+#Package: libtasks-lssol-dev
+#Provides: libtasks-dev
+#Replaces: libtasks-qld-dev
+#Section: libdevel
+#Architecture: any
+#Depends: pkg-config,
+#         libeigen3-dev (>= 3.2),
+#         libspacevecalg-dev,
+#         librbdyn-dev,
+#         libsch-core-dev,
+#         libeigen-lssol-dev,
+#         libtasks-lssol0 (= ${binary:Version}),
+#         ${misc:Depends}
+#Suggests: libtasks-lssol-doc
+#Description: tasks - development files
+# The Tasks library is designed to make real-time control for
+# kinematics tree and list of kinematics tree.
+# .
+# This package contains development files (headers and shared library
+# symbolic link).
+#
+#
+#Package: libtasks-lssol0
+#Provides: libtasks0
+#Replaces: libtasks-qld0
+#Section: libs
+#Architecture: any
+#Depends: ${shlibs:Depends},
+#         ${misc:Depends}
+#Description: tasks: real-time control
+# The Tasks library is designed to make real-time control for
+# kinematics tree and list of kinematics tree.
+#
+#Package: libtasks-lssol-doc
+#Provides: libtasks-doc
+#Replaces: libtasks-qld-doc
+#Section: doc
+#Architecture: all
+#Depends: ${misc:Depends}
+#Multi-Arch: foreign
+#Suggests: libtasks-dev
+#Description: tasks API documentation
+# The Tasks library is designed to make real-time control for
+# kinematics tree and list of kinematics tree.
+# .
+# This package provides the complete API documentation in HTML format.
