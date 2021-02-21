@@ -125,6 +125,8 @@ void MotionConstrCommon::computeTorque(const Eigen::VectorXd & alphaD, const Eig
   curTorque_ = fd_->H() * alphaD.segment(alphaDBegin_, nrDof_);
   curTorque_ += fd_->C();
   curTorque_ += A_.block(0, lambdaBegin_, nrDof_, A_.cols() - lambdaBegin_) * lambda;
+  // std::cout << "Rafa, in MotionConstrCommon::computeTorque, alphaD.segment(alphaDBegin_, nrDof_) = " << alphaD.segment(alphaDBegin_, nrDof_) << std::endl;
+  // std::cout << "Rafa, in MotionConstrCommon::computeTorque, fd_->H() = " << fd_->H() << std::endl;
 }
 
 const Eigen::VectorXd & MotionConstrCommon::torque() const

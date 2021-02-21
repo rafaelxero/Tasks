@@ -368,12 +368,14 @@ public:
                       const SolverData & data) override;
 
   virtual const Eigen::MatrixXd & jac() override;
+  virtual const Eigen::MatrixXd & jacDot() override;
   virtual const Eigen::VectorXd & eval() override;
   virtual const Eigen::VectorXd & speed() override;
   virtual const Eigen::VectorXd & normalAcc() override;
 
 private:
   Eigen::MatrixXd jac_;
+  Eigen::MatrixXd jacDot_;
   std::vector<SelectedData> selectedJoints_;
   HighLevelTask * hl_;
 };
@@ -604,6 +606,7 @@ public:
                       const SolverData & data) override;
 
   virtual const Eigen::MatrixXd & jac() override;
+  virtual const Eigen::MatrixXd & jacDot() override;
   virtual const Eigen::VectorXd & eval() override;
   virtual const Eigen::VectorXd & speed() override;
   virtual const Eigen::VectorXd & normalAcc() override;
@@ -656,6 +659,7 @@ public:
                       const SolverData & data) override;
 
   virtual const Eigen::MatrixXd & jac() override;
+  virtual const Eigen::MatrixXd & jacDot() override;
   virtual const Eigen::VectorXd & eval() override;
   virtual const Eigen::VectorXd & speed() override;
   virtual const Eigen::VectorXd & normalAcc() override;
@@ -711,6 +715,12 @@ public:
   virtual const Eigen::MatrixXd & jac() override
   {
     return tt_.jac();
+  }
+
+  // Rafa's test, not really implemented
+  virtual const Eigen::MatrixXd & jacDot() override
+  {
+    return tt_.jacDot();
   }
 
   virtual const Eigen::VectorXd & eval() override
@@ -807,6 +817,7 @@ public:
                       const SolverData & data) override;
 
   virtual const Eigen::MatrixXd & jac() override;
+  virtual const Eigen::MatrixXd & jacDot() override;
   virtual const Eigen::VectorXd & eval() override;
   virtual const Eigen::VectorXd & speed() override;
   virtual const Eigen::VectorXd & normalAcc() override;
@@ -854,6 +865,7 @@ public:
                       const SolverData & data) override;
 
   virtual const Eigen::MatrixXd & jac() override;
+  virtual const Eigen::MatrixXd & jacDot() override;
   virtual const Eigen::VectorXd & eval() override;
   virtual const Eigen::VectorXd & speed() override;
   virtual const Eigen::VectorXd & normalAcc() override;
@@ -888,6 +900,7 @@ public:
                       const SolverData & data) override;
 
   virtual const Eigen::MatrixXd & jac() override;
+  virtual const Eigen::MatrixXd & jacDot() override;
   virtual const Eigen::VectorXd & eval() override;
   virtual const Eigen::VectorXd & speed() override;
   virtual const Eigen::VectorXd & normalAcc() override;
@@ -939,6 +952,7 @@ public:
                       const SolverData & data) override;
 
   virtual const Eigen::MatrixXd & jac() override;
+  virtual const Eigen::MatrixXd & jacDot() override;
   virtual const Eigen::VectorXd & eval() override;
   virtual const Eigen::VectorXd & speed() override;
   virtual const Eigen::VectorXd & normalAcc() override;
@@ -1119,6 +1133,7 @@ public:
                       const SolverData & data) override;
 
   virtual const Eigen::MatrixXd & jac() override;
+  virtual const Eigen::MatrixXd & jacDot() override;
   virtual const Eigen::VectorXd & eval() override;
   virtual const Eigen::VectorXd & speed() override;
   virtual const Eigen::VectorXd & normalAcc() override;
@@ -1313,6 +1328,7 @@ public:
                       const SolverData & data) override;
 
   virtual const Eigen::MatrixXd & jac() override;
+  virtual const Eigen::MatrixXd & jacDot() override;
   virtual const Eigen::VectorXd & eval() override;
   virtual const Eigen::VectorXd & speed() override;
   virtual const Eigen::VectorXd & normalAcc() override;
@@ -1374,6 +1390,7 @@ public:
                       const SolverData & data) override;
 
   virtual const Eigen::MatrixXd & jac() override;
+  virtual const Eigen::MatrixXd & jacDot() override;
   virtual const Eigen::VectorXd & eval() override;
   virtual const Eigen::VectorXd & speed() override;
   virtual const Eigen::VectorXd & normalAcc() override;
@@ -1472,6 +1489,7 @@ public:
                       const SolverData & data) override;
 
   virtual const Eigen::MatrixXd & jac() override;
+  virtual const Eigen::MatrixXd & jacDot() override;  
   virtual const Eigen::VectorXd & eval() override;
   virtual const Eigen::VectorXd & speed() override;
   virtual const Eigen::VectorXd & normalAcc() override;

@@ -200,7 +200,7 @@ TransformTaskCommon::TransformTaskCommon(const rbd::MultiBody & mb,
                                          const sva::PTransformd & X_0_t,
                                          const sva::PTransformd & X_b_p)
 : X_0_t_(X_0_t), X_b_p_(X_b_p), bodyIndex_(mb.bodyIndexByName(bodyName)), jac_(mb, bodyName), eval_(6), speed_(6),
-  normalAcc_(6), jacMat_(6, mb.nrDof())
+  normalAcc_(6), jacMat_(6, mb.nrDof()), jacDotMat_(6, mb.nrDof())
 {
 }
 
@@ -242,6 +242,11 @@ const Eigen::VectorXd & TransformTaskCommon::normalAcc() const
 const Eigen::MatrixXd & TransformTaskCommon::jac() const
 {
   return jacMat_;
+}
+
+const Eigen::MatrixXd & TransformTaskCommon::jacDot() const
+{
+  return jacDotMat_;
 }
 
 /**
@@ -1531,7 +1536,7 @@ VectorOrientationTask::VectorOrientationTask(const rbd::MultiBody & mb,
                                              const Eigen::Vector3d & targetVector)
 : actualVector_(Eigen::Vector3d::Zero()), bodyVector_(bodyVector), targetVector_(targetVector),
   bodyIndex_(mb.bodyIndexByName(bodyName)), jac_(mb, bodyName), eval_(3), speed_(3), normalAcc_(3),
-  jacMat_(3, mb.nrDof())
+  jacMat_(3, mb.nrDof()), jacDotMat_(3, mb.nrDof())
 {
 }
 
@@ -1611,5 +1616,9 @@ const Eigen::MatrixXd & VectorOrientationTask::jac() const
   return jacMat_;
 }
 
+const Eigen::MatrixXd & VectorOrientationTask::jacDot() const
+{
+  return jacDotMat_;
+}
 
 } // namespace tasks

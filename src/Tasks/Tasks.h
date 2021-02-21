@@ -123,6 +123,7 @@ public:
   const Eigen::VectorXd & normalAcc() const;
 
   const Eigen::MatrixXd & jac() const;
+  const Eigen::MatrixXd & jacDot() const;  // Rafa's test, not really implemented
 
 protected:
   sva::PTransformd X_0_t_;
@@ -134,6 +135,7 @@ protected:
   Eigen::VectorXd speed_;
   Eigen::VectorXd normalAcc_;
   Eigen::MatrixXd jacMat_;
+  Eigen::MatrixXd jacDotMat_;
 };
 
 class TASKS_DLLAPI SurfaceTransformTask : public TransformTaskCommon
@@ -673,6 +675,7 @@ public:
   const Eigen::VectorXd & normalAcc() const;
 
   const Eigen::MatrixXd & jac() const;
+  const Eigen::MatrixXd & jacDot() const;
 
 private:
   Eigen::Matrix3d skewMatrix(const Eigen::Vector3d & v);
@@ -686,6 +689,7 @@ private:
   Eigen::VectorXd speed_;
   Eigen::VectorXd normalAcc_;
   Eigen::MatrixXd jacMat_;
+  Eigen::MatrixXd jacDotMat_;
 };
 
 

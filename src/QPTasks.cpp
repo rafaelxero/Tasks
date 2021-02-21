@@ -615,15 +615,22 @@ void JointsSelector::update(const std::vector<rbd::MultiBody> & mbs,
 {
   hl_->update(mbs, mbcs, data);
   const Eigen::MatrixXd & jac = hl_->jac();
+  const Eigen::MatrixXd & jacDot = hl_->jacDot();
   for(SelectedData sd : selectedJoints_)
   {
     jac_.block(0, sd.posInDof, jac_.rows(), sd.dof) = jac.block(0, sd.posInDof, jac_.rows(), sd.dof);
+    jacDot_.block(0, sd.posInDof, jacDot_.rows(), sd.dof) = jacDot.block(0, sd.posInDof, jacDot_.rows(), sd.dof);
   }
 }
 
 const Eigen::MatrixXd & JointsSelector::jac()
 {
   return jac_;
+}
+
+const Eigen::MatrixXd & JointsSelector::jacDot()
+{
+  return jacDot_;
 }
 
 const Eigen::VectorXd & JointsSelector::eval()
@@ -816,6 +823,17 @@ void PostureTask::update(const std::vector<rbd::MultiBody> & mbs,
   // joint
   C_.segment(deb, end) = -stiffness_ * pt_.eval().segment(deb, end) + damping_ * alphaVec_.segment(deb, end);
 
+  /*
+  std::cout << "Rafa, in tasks::qp::PostureTask::update, stiffness_ = " << stiffness_ << std::endl;
+  std::cout << "Rafa, in tasks::qp::PostureTask::update, pt_.eval().segment(" << deb << ", " << end << ") = "
+            << pt_.eval().segment(deb, end).transpose() << std::endl;
+  std::cout << "Rafa, in tasks::qp::PostureTask::update, damping_ = " << damping_ << std::endl;
+  std::cout << "Rafa, in tasks::qp::PostureTask::update, alphaVec_.segment(" << deb << ", " << end << ") = "
+            << alphaVec_.segment(deb, end).transpose() << std::endl;
+  std::cout << "Rafa, in tasks::qp::PostureTask::update, C_.segment(" << deb << ", " << end << ") = "
+            << C_.segment(deb, end).transpose() << std::endl;
+  */
+  
   for(const JointData & pjd : jointDatas_)
   {
     C_.segment(pjd.start, pjd.size) =
@@ -861,11 +879,17 @@ void PositionTask::update(const std::vector<rbd::MultiBody> & mbs,
                           const SolverData & data)
 {
   pt_.update(mbs[robotIndex_], mbcs[robotIndex_], data.normalAccB(robotIndex_));
+  pt_.updateDot(mbs[robotIndex_], mbcs[robotIndex_]);
 }
 
 const Eigen::MatrixXd & PositionTask::jac()
 {
   return pt_.jac();
+}
+
+const Eigen::MatrixXd & PositionTask::jacDot()
+{
+  return pt_.jacDot();
 }
 
 const Eigen::VectorXd & PositionTask::eval()
@@ -913,11 +937,17 @@ void OrientationTask::update(const std::vector<rbd::MultiBody> & mbs,
                              const SolverData & data)
 {
   ot_.update(mbs[robotIndex_], mbcs[robotIndex_], data.normalAccB(robotIndex_));
+  ot_.updateDot(mbs[robotIndex_], mbcs[robotIndex_]);
 }
 
 const Eigen::MatrixXd & OrientationTask::jac()
 {
   return ot_.jac();
+}
+
+const Eigen::MatrixXd & OrientationTask::jacDot()
+{
+  return ot_.jacDot();
 }
 
 const Eigen::VectorXd & OrientationTask::eval()
@@ -1026,6 +1056,11 @@ const Eigen::MatrixXd & SurfaceOrientationTask::jac()
   return ot_.jac();
 }
 
+const Eigen::MatrixXd & SurfaceOrientationTask::jacDot()
+{
+  return ot_.jacDot();
+}
+
 const Eigen::VectorXd & SurfaceOrientationTask::eval()
 {
   return ot_.eval();
@@ -1083,6 +1118,11 @@ const Eigen::MatrixXd & GazeTask::jac()
   return gazet_.jac();
 }
 
+const Eigen::MatrixXd & GazeTask::jacDot()
+{
+  return gazet_.jacDot();
+}
+
 const Eigen::VectorXd & GazeTask::eval()
 {
   return gazet_.eval();
@@ -1126,6 +1166,11 @@ void PositionBasedVisServoTask::update(const std::vector<rbd::MultiBody> & mbs,
 const Eigen::MatrixXd & PositionBasedVisServoTask::jac()
 {
   return pbvst_.jac();
+}
+
+const Eigen::MatrixXd & PositionBasedVisServoTask::jacDot()
+{
+  return pbvst_.jacDot();
 }
 
 const Eigen::VectorXd & PositionBasedVisServoTask::eval()
@@ -1181,6 +1226,11 @@ void CoMTask::update(const std::vector<rbd::MultiBody> & mbs,
 const Eigen::MatrixXd & CoMTask::jac()
 {
   return ct_.jac();
+}
+
+const Eigen::MatrixXd & CoMTask::jacDot()
+{
+  return ct_.jacDot();
 }
 
 const Eigen::VectorXd & CoMTask::eval()
@@ -1467,6 +1517,11 @@ const Eigen::MatrixXd & MomentumTask::jac()
   return momt_.jac();
 }
 
+const Eigen::MatrixXd & MomentumTask::jacDot()
+{
+  return momt_.jacDot();
+}
+
 const Eigen::VectorXd & MomentumTask::eval()
 {
   return momt_.eval();
@@ -1700,6 +1755,11 @@ const Eigen::MatrixXd & LinVelocityTask::jac()
   return pt_.jac();
 }
 
+const Eigen::MatrixXd & LinVelocityTask::jacDot()
+{
+  return pt_.jacDot();
+}
+
 const Eigen::VectorXd & LinVelocityTask::eval()
 {
   return pt_.eval();
@@ -1750,6 +1810,11 @@ void OrientationTrackingTask::update(const std::vector<rbd::MultiBody> & mbs,
 const Eigen::MatrixXd & OrientationTrackingTask::jac()
 {
   return ott_.jac();
+}
+
+const Eigen::MatrixXd & OrientationTrackingTask::jacDot()
+{
+  return ott_.jacDot();
 }
 
 const Eigen::VectorXd & OrientationTrackingTask::eval()
@@ -1842,6 +1907,11 @@ void VectorOrientationTask::update(const std::vector<rbd::MultiBody> & mbs,
 const Eigen::MatrixXd & VectorOrientationTask::jac()
 {
   return vot_.jac();
+}
+
+const Eigen::MatrixXd & VectorOrientationTask::jacDot()
+{
+  return vot_.jacDot();
 }
 
 const Eigen::VectorXd & VectorOrientationTask::eval()
